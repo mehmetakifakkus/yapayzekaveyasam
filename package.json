@@ -1,0 +1,15 @@
+{
+  "name": "ai-showcase",
+  "version": "1.0.0",
+  "description": "AI Showcase - Web applications built with AI tools",
+  "scripts": {
+    "build": "tailwindcss -i ./src/input.css -o ./public/assets/css/app.css --minify",
+    "watch": "tailwindcss -i ./src/input.css -o ./public/assets/css/app.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.18",
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18"
+  }
+}
