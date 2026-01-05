@@ -70,4 +70,6 @@ $routes->group('admin', function($routes) {
     $routes->get('users', 'Admin::users');
     $routes->post('users/(:num)/ban', 'Admin::banUser/$1');
     $routes->post('users/(:num)/unban', 'Admin::unbanUser/$1');
+    $routes->get('settings', 'Admin::settings');
+    $routes->post('settings', 'Admin::updateSettings');
 });

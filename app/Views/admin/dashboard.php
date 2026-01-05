@@ -16,6 +16,9 @@
             <a href="<?= base_url('admin/users') ?>" class="btn-secondary">
                 Kullanıcılar
             </a>
+            <a href="<?= base_url('admin/settings') ?>" class="btn-secondary">
+                Ayarlar
+            </a>
         </div>
     </div>
 
