@@ -8,6 +8,7 @@ use App\Models\CategoryModel;
 use App\Models\AiToolModel;
 use App\Models\LikeModel;
 use App\Models\CommentModel;
+use App\Models\NotificationModel;
 
 class Admin extends BaseController
 {
@@ -130,6 +131,15 @@ class Admin extends BaseController
             'status' => 'approved',
             'rejection_reason' => null,
         ]);
+
+        // Create notification for the project owner
+        $notificationModel = model('NotificationModel');
+        $notificationModel->createNotification(
+            $project['user_id'],
+            null, // No actor for system notification
+            'approve',
+            $id
+        );
 
         if ($this->request->isAJAX()) {
             return $this->response->setJSON(['success' => true, 'message' => 'Proje onaylandı.']);

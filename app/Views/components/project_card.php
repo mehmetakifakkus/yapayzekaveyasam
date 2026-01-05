@@ -78,7 +78,7 @@
                 <!-- Stats -->
                 <div class="flex items-center gap-4">
                     <span class="stats-badge">
-                        <svg class="w-4 h-4 <?= $project['is_liked'] ? 'text-pink-500 fill-current' : '' ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 <?= !empty($project['is_liked']) ? 'text-pink-500 fill-current' : '' ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                         </svg>
                         <?= number_format($project['likes_count'] ?? 0) ?>
@@ -94,4 +94,15 @@
             </div>
         </div>
     </a>
+
+    <!-- Bookmark Button (positioned absolute) -->
+    <button
+        onclick="toggleBookmark(<?= $project['id'] ?>, this, event)"
+        class="absolute top-3 right-3 p-2 rounded-lg bg-slate-900/70 backdrop-blur-sm text-slate-300 hover:text-white hover:bg-slate-800/90 transition-all opacity-0 group-hover:opacity-100 bookmark-btn <?= !empty($project['is_bookmarked']) ? 'is-bookmarked' : '' ?>"
+        title="<?= !empty($project['is_bookmarked']) ? 'Kayıttan Çıkar' : 'Kaydet' ?>"
+    >
+        <svg class="w-5 h-5 <?= !empty($project['is_bookmarked']) ? 'text-yellow-500 fill-current' : '' ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+        </svg>
+    </button>
 </article>

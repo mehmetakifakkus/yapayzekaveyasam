@@ -212,4 +212,147 @@ class ProjectModel extends Model
 
         return $slug;
     }
+
+    /**
+     * Get projects with stats (likes_count) included - optimized to avoid N+1
+     */
+    public function getProjectsWithStats(int $limit = 12, int $offset = 0, array $filters = [], ?int $userId = null): array
+    {
+        $builder = $this->select('projects.*, users.name as user_name, users.avatar as user_avatar, categories.name as category_name, categories.slug as category_slug')
+            ->select('(SELECT COUNT(*) FROM likes WHERE likes.project_id = projects.id) as likes_count', false)
+            ->join('users', 'users.id = projects.user_id')
+            ->join('categories', 'categories.id = projects.category_id')
+            ->where('projects.status', 'approved');
+
+        // Category filter
+        if (!empty($filters['category'])) {
+            $builder->where('categories.slug', $filters['category']);
+        }
+
+        // AI Tool filter
+        if (!empty($filters['ai_tool'])) {
+            $builder->join('project_ai_tools', 'project_ai_tools.project_id = projects.id')
+                ->join('ai_tools', 'ai_tools.id = project_ai_tools.ai_tool_id')
+                ->where('ai_tools.slug', $filters['ai_tool']);
+        }
+
+        // Search filter
+        if (!empty($filters['search'])) {
+            $builder->groupStart()
+                ->like('projects.title', $filters['search'])
+                ->orLike('projects.description', $filters['search'])
+                ->groupEnd();
+        }
+
+        // Sorting
+        $sort = $filters['sort'] ?? 'newest';
+        switch ($sort) {
+            case 'popular':
+                $builder->orderBy('projects.views', 'DESC');
+                break;
+            case 'trending':
+                $builder->select('(SELECT COUNT(*) FROM likes WHERE likes.project_id = projects.id AND likes.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)) as recent_likes', false)
+                    ->orderBy('recent_likes', 'DESC');
+                break;
+            case 'oldest':
+                $builder->orderBy('projects.created_at', 'ASC');
+                break;
+            default:
+                $builder->orderBy('projects.created_at', 'DESC');
+        }
+
+        $projects = $builder->limit($limit, $offset)->findAll();
+
+        // Get AI tools for all projects in one query
+        if (!empty($projects)) {
+            $projectIds = array_column($projects, 'id');
+            $aiTools = $this->getAiToolsForProjects($projectIds);
+
+            // Get user's liked projects if logged in
+            $likedProjectIds = [];
+            if ($userId) {
+                $likedProjectIds = $this->db->table('likes')
+                    ->select('project_id')
+                    ->where('user_id', $userId)
+                    ->whereIn('project_id', $projectIds)
+                    ->get()
+                    ->getResultArray();
+                $likedProjectIds = array_column($likedProjectIds, 'project_id');
+            }
+
+            // Attach AI tools and is_liked to projects
+            foreach ($projects as &$project) {
+                $project['ai_tools'] = $aiTools[$project['id']] ?? [];
+                $project['is_liked'] = in_array($project['id'], $likedProjectIds);
+            }
+        }
+
+        return $projects;
+    }
+
+    /**
+     * Get featured projects with stats - optimized
+     */
+    public function getFeaturedWithStats(int $limit = 6, ?int $userId = null): array
+    {
+        $projects = $this->select('projects.*, users.name as user_name, users.avatar as user_avatar, categories.name as category_name')
+            ->select('(SELECT COUNT(*) FROM likes WHERE likes.project_id = projects.id) as likes_count', false)
+            ->join('users', 'users.id = projects.user_id')
+            ->join('categories', 'categories.id = projects.category_id')
+            ->where('projects.status', 'approved')
+            ->where('projects.is_featured', 1)
+            ->orderBy('projects.created_at', 'DESC')
+            ->limit($limit)
+            ->findAll();
+
+        if (!empty($projects)) {
+            $projectIds = array_column($projects, 'id');
+            $aiTools = $this->getAiToolsForProjects($projectIds);
+
+            $likedProjectIds = [];
+            if ($userId) {
+                $likedProjectIds = $this->db->table('likes')
+                    ->select('project_id')
+                    ->where('user_id', $userId)
+                    ->whereIn('project_id', $projectIds)
+                    ->get()
+                    ->getResultArray();
+                $likedProjectIds = array_column($likedProjectIds, 'project_id');
+            }
+
+            foreach ($projects as &$project) {
+                $project['ai_tools'] = $aiTools[$project['id']] ?? [];
+                $project['is_liked'] = in_array($project['id'], $likedProjectIds);
+            }
+        }
+
+        return $projects;
+    }
+
+    /**
+     * Get AI tools for multiple projects in one query
+     */
+    private function getAiToolsForProjects(array $projectIds): array
+    {
+        if (empty($projectIds)) {
+            return [];
+        }
+
+        $tools = $this->db->table('project_ai_tools')
+            ->select('project_ai_tools.project_id, ai_tools.id, ai_tools.name, ai_tools.slug, ai_tools.icon')
+            ->join('ai_tools', 'ai_tools.id = project_ai_tools.ai_tool_id')
+            ->whereIn('project_ai_tools.project_id', $projectIds)
+            ->get()
+            ->getResultArray();
+
+        // Group by project_id
+        $grouped = [];
+        foreach ($tools as $tool) {
+            $pid = $tool['project_id'];
+            unset($tool['project_id']);
+            $grouped[$pid][] = $tool;
+        }
+
+        return $grouped;
+    }
 }

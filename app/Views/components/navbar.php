@@ -40,6 +40,40 @@
                         <span>Proje Ekle</span>
                     </a>
 
+                    <!-- Feed Link -->
+                    <a href="<?= base_url('feed') ?>" class="hidden sm:flex p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors" title="Takip Akışı">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+                        </svg>
+                    </a>
+
+                    <!-- Notifications -->
+                    <div class="relative" id="notification-dropdown">
+                        <button
+                            onclick="toggleNotifications()"
+                            class="relative p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                            title="Bildirimler"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                            <span id="notification-badge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-xs font-medium rounded-full flex items-center justify-center px-1">0</span>
+                        </button>
+
+                        <!-- Notification Dropdown -->
+                        <div id="notification-menu" class="hidden absolute right-0 mt-2 w-80 glass-card shadow-xl overflow-hidden">
+                            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+                                <h3 class="font-medium text-white">Bildirimler</h3>
+                                <a href="<?= base_url('notifications') ?>" class="text-xs text-purple-400 hover:text-purple-300">Tümünü Gör</a>
+                            </div>
+                            <div id="notification-list" class="max-h-80 overflow-y-auto">
+                                <div class="px-4 py-8 text-center text-slate-400 text-sm">
+                                    Yükleniyor...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- User Dropdown -->
                     <div class="relative" x-data="{ open: false }">
                         <button
@@ -67,6 +101,27 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                 </svg>
                                 Profilim
+                            </a>
+
+                            <a href="<?= base_url('user/' . $currentUser['id'] . '/bookmarks') ?>" class="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                                </svg>
+                                Kaydedilenler
+                            </a>
+
+                            <a href="<?= base_url('feed') ?>" class="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors sm:hidden">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+                                </svg>
+                                Takip Akışı
+                            </a>
+
+                            <a href="<?= base_url('notifications') ?>" class="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors sm:hidden">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                                </svg>
+                                Bildirimler
                             </a>
 
                             <a href="<?= base_url('projects/create') ?>" class="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors sm:hidden">
@@ -145,3 +200,127 @@
         </div>
     </div>
 </nav>
+
+<?php if ($isLoggedIn): ?>
+<script>
+// Notification functions
+let notificationsLoaded = false;
+
+function toggleNotifications() {
+    const menu = document.getElementById('notification-menu');
+    menu.classList.toggle('hidden');
+
+    if (!menu.classList.contains('hidden') && !notificationsLoaded) {
+        loadNotifications();
+    }
+}
+
+function loadNotifications() {
+    fetch('<?= base_url('api/notifications') ?>')
+        .then(response => response.json())
+        .then(data => {
+            notificationsLoaded = true;
+            const list = document.getElementById('notification-list');
+
+            if (!data.success || data.notifications.length === 0) {
+                list.innerHTML = '<div class="px-4 py-8 text-center text-slate-400 text-sm">Bildirim yok</div>';
+                return;
+            }
+
+            list.innerHTML = data.notifications.map(n => renderNotification(n)).join('');
+        })
+        .catch(err => {
+            document.getElementById('notification-list').innerHTML = '<div class="px-4 py-8 text-center text-red-400 text-sm">Yüklenemedi</div>';
+        });
+}
+
+function renderNotification(n) {
+    const icon = getNotificationIcon(n.type);
+    const message = getNotificationMessage(n);
+    const isUnread = !n.is_read ? 'bg-purple-500/10' : '';
+    const url = n.project_id ? '<?= base_url('projects') ?>/' + n.project_slug : '<?= base_url('user') ?>/' + n.actor_id;
+
+    return `
+        <a href="${url}" class="flex items-start gap-3 px-4 py-3 hover:bg-slate-700/50 transition-colors ${isUnread}">
+            <img src="${n.actor_avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(n.actor_name)}" class="w-8 h-8 rounded-full flex-shrink-0" alt="">
+            <div class="flex-1 min-w-0">
+                <p class="text-sm text-slate-300"><span class="font-medium text-white">${escapeHtml(n.actor_name)}</span> ${message}</p>
+                <p class="text-xs text-slate-500 mt-1">${timeAgo(n.created_at)}</p>
+            </div>
+            ${icon}
+        </a>
+    `;
+}
+
+function getNotificationIcon(type) {
+    const icons = {
+        'like': '<svg class="w-4 h-4 text-pink-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>',
+        'comment': '<svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>',
+        'follow': '<svg class="w-4 h-4 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>',
+        'approve': '<svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+    };
+    return icons[type] || '';
+}
+
+function getNotificationMessage(n) {
+    const messages = {
+        'like': 'projenizi beğendi',
+        'comment': 'projenize yorum yaptı',
+        'follow': 'sizi takip etmeye başladı',
+        'approve': 'projeniz onaylandı'
+    };
+    let msg = messages[n.type] || '';
+    if (n.project_title && n.type !== 'follow') {
+        msg = `"${escapeHtml(n.project_title)}" ${n.type === 'approve' ? '' : 'adlı '}${msg}`;
+    }
+    return msg;
+}
+
+function timeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) return 'Az önce';
+    if (seconds < 3600) return Math.floor(seconds / 60) + ' dk önce';
+    if (seconds < 86400) return Math.floor(seconds / 3600) + ' saat önce';
+    if (seconds < 604800) return Math.floor(seconds / 86400) + ' gün önce';
+    return date.toLocaleDateString('tr-TR');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Load unread count on page load
+function updateNotificationBadge() {
+    fetch('<?= base_url('api/notifications/unread-count') ?>')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.getElementById('notification-badge');
+            if (data.count > 0) {
+                badge.textContent = data.count > 99 ? '99+' : data.count;
+                badge.classList.remove('hidden');
+                badge.classList.add('flex');
+            } else {
+                badge.classList.add('hidden');
+                badge.classList.remove('flex');
+            }
+        });
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('notification-dropdown');
+    const menu = document.getElementById('notification-menu');
+    if (dropdown && !dropdown.contains(e.target)) {
+        menu.classList.add('hidden');
+    }
+});
+
+// Update badge on page load
+document.addEventListener('DOMContentLoaded', updateNotificationBadge);
+</script>
+<?php endif; ?>

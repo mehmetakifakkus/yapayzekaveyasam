@@ -116,6 +116,8 @@ class Projects extends BaseController
             return redirect()->to('/auth/google');
         }
 
+        $this->requireNotBanned();
+
         $categories = $this->categoryModel->findAll();
         $aiTools = $this->aiToolModel->findAll();
 
@@ -136,6 +138,8 @@ class Projects extends BaseController
         if (!$this->isLoggedIn()) {
             return redirect()->to('/auth/google');
         }
+
+        $this->requireNotBanned();
 
         $rules = [
             'title'       => 'required|min_length[3]|max_length[255]',
@@ -166,6 +170,11 @@ class Projects extends BaseController
             $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
             if (!in_array($screenshot->getMimeType(), $allowedTypes)) {
                 return redirect()->back()->withInput()->with('error', 'Sadece resim dosyaları yüklenebilir.');
+            }
+
+            // Max 2MB file size
+            if ($screenshot->getSize() > 2 * 1024 * 1024) {
+                return redirect()->back()->withInput()->with('error', 'Dosya boyutu maksimum 2MB olabilir.');
             }
 
             $newName = $screenshot->getRandomName();
@@ -207,6 +216,8 @@ class Projects extends BaseController
             return redirect()->to('/auth/google');
         }
 
+        $this->requireNotBanned();
+
         $project = $this->projectModel->findBySlug($slug);
 
         if (!$project || $project['user_id'] !== $this->currentUser['id']) {
@@ -235,6 +246,8 @@ class Projects extends BaseController
         if (!$this->isLoggedIn()) {
             return redirect()->to('/auth/google');
         }
+
+        $this->requireNotBanned();
 
         $project = $this->projectModel->findBySlug($slug);
 
@@ -273,6 +286,11 @@ class Projects extends BaseController
             $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
             if (!in_array($screenshot->getMimeType(), $allowedTypes)) {
                 return redirect()->back()->withInput()->with('error', 'Sadece resim dosyaları yüklenebilir.');
+            }
+
+            // Max 2MB file size
+            if ($screenshot->getSize() > 2 * 1024 * 1024) {
+                return redirect()->back()->withInput()->with('error', 'Dosya boyutu maksimum 2MB olabilir.');
             }
 
             // Delete old screenshot

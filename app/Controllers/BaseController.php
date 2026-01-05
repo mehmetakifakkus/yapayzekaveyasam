@@ -100,6 +100,27 @@ abstract class BaseController extends Controller
     }
 
     /**
+     * Check if current user is banned
+     */
+    protected function isBanned(): bool
+    {
+        return $this->isLoggedIn() && ($this->currentUser['is_banned'] ?? false);
+    }
+
+    /**
+     * Require user is not banned
+     */
+    protected function requireNotBanned(): void
+    {
+        $this->requireAuth();
+
+        if ($this->isBanned()) {
+            $this->session->setFlashdata('error', 'Hesabınız askıya alınmıştır.');
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+    }
+
+    /**
      * Get shared view data
      */
     protected function getViewData(array $data = []): array
