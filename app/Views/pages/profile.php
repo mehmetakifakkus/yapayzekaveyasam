@@ -58,24 +58,55 @@
                         <div class="text-sm text-slate-500">Beğeni</div>
                     </div>
                     <div class="text-center sm:text-left">
-                        <div class="text-sm text-slate-500">
-                            Üye: <?= date('M Y', strtotime($user['created_at'])) ?>
-                        </div>
+                        <div class="text-2xl font-bold text-white" id="follower-count"><?= number_format($followerCount) ?></div>
+                        <div class="text-sm text-slate-500">Takipçi</div>
                     </div>
+                    <div class="text-center sm:text-left">
+                        <div class="text-2xl font-bold text-white"><?= number_format($followingCount) ?></div>
+                        <div class="text-sm text-slate-500">Takip</div>
+                    </div>
+                </div>
+
+                <!-- Member since -->
+                <div class="text-sm text-slate-500 mt-4">
+                    Üye: <?= date('M Y', strtotime($user['created_at'])) ?>
                 </div>
             </div>
 
             <!-- Actions -->
-            <?php if ($isOwnProfile): ?>
-            <div class="flex-shrink-0">
-                <a href="<?= base_url('projects/create') ?>" class="btn-primary flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    Yeni Proje
-                </a>
+            <div class="flex-shrink-0 flex flex-col gap-2">
+                <?php if ($isOwnProfile): ?>
+                    <a href="<?= base_url('projects/create') ?>" class="btn-primary flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Yeni Proje
+                    </a>
+                    <a href="<?= base_url('user/' . $user['id'] . '/bookmarks') ?>" class="btn-secondary flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                        </svg>
+                        Kaydedilenler
+                    </a>
+                <?php elseif (isset($isLoggedIn) && $isLoggedIn): ?>
+                    <button
+                        onclick="toggleFollow(<?= $user['id'] ?>, this)"
+                        class="<?= $isFollowing ? 'btn-secondary' : 'btn-primary' ?> flex items-center gap-2"
+                    >
+                        <?php if ($isFollowing): ?>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Takip Ediliyor
+                        <?php else: ?>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                            </svg>
+                            Takip Et
+                        <?php endif; ?>
+                    </button>
+                <?php endif; ?>
             </div>
-            <?php endif; ?>
         </div>
     </div>
 

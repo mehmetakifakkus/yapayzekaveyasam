@@ -113,3 +113,123 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// Toggle bookmark on a project
+function toggleBookmark(projectId, button, event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    fetch('/api/bookmark/' + projectId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const svg = button.querySelector('svg');
+            if (data.bookmarked) {
+                svg.classList.add('text-yellow-500', 'fill-current');
+                button.classList.add('is-bookmarked');
+                button.title = 'Kayıttan Çıkar';
+            } else {
+                svg.classList.remove('text-yellow-500', 'fill-current');
+                button.classList.remove('is-bookmarked');
+                button.title = 'Kaydet';
+            }
+            showToast(data.message, 'success');
+        } else {
+            if (data.requireAuth) {
+                showToast(data.message, 'info');
+            } else {
+                showToast(data.message, 'error');
+            }
+        }
+    })
+    .catch(err => {
+        showToast('Bir hata oluştu', 'error');
+    });
+}
+
+// Toggle follow on a user
+function toggleFollow(userId, button) {
+    fetch('/api/follow/' + userId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.following) {
+                button.classList.remove('btn-primary');
+                button.classList.add('btn-secondary');
+                button.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Takip Ediliyor';
+            } else {
+                button.classList.add('btn-primary');
+                button.classList.remove('btn-secondary');
+                button.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg> Takip Et';
+            }
+            // Update follower count if visible
+            const followerCount = document.getElementById('follower-count');
+            if (followerCount) {
+                let count = parseInt(followerCount.textContent) || 0;
+                followerCount.textContent = data.following ? count + 1 : count - 1;
+            }
+            showToast(data.message, 'success');
+        } else {
+            if (data.requireAuth) {
+                showToast(data.message, 'info');
+            } else {
+                showToast(data.message, 'error');
+            }
+        }
+    })
+    .catch(err => {
+        showToast('Bir hata oluştu', 'error');
+    });
+}
+
+// Toggle like on a project
+function toggleLike(projectId, button) {
+    fetch('/api/like/' + projectId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const svg = button.querySelector('svg');
+            const countSpan = button.querySelector('.like-count') || button.nextElementSibling;
+
+            if (data.action === 'liked') {
+                svg.classList.add('text-pink-500', 'fill-current');
+                button.classList.add('is-liked');
+            } else {
+                svg.classList.remove('text-pink-500', 'fill-current');
+                button.classList.remove('is-liked');
+            }
+
+            if (countSpan) {
+                countSpan.textContent = formatNumber(data.count);
+            }
+            showToast(data.message, 'success');
+        } else {
+            if (data.requireAuth) {
+                showToast(data.message, 'info');
+            } else {
+                showToast(data.message, 'error');
+            }
+        }
+    })
+    .catch(err => {
+        showToast('Bir hata oluştu', 'error');
+    });
+}

@@ -5,6 +5,9 @@ namespace App\Controllers;
 use App\Models\ProjectModel;
 use App\Models\LikeModel;
 use App\Models\CommentModel;
+use App\Models\BookmarkModel;
+use App\Models\FollowModel;
+use App\Models\NotificationModel;
 use CodeIgniter\API\ResponseTrait;
 
 class Api extends BaseController
@@ -14,12 +17,18 @@ class Api extends BaseController
     protected ProjectModel $projectModel;
     protected LikeModel $likeModel;
     protected CommentModel $commentModel;
+    protected BookmarkModel $bookmarkModel;
+    protected FollowModel $followModel;
+    protected NotificationModel $notificationModel;
 
     public function __construct()
     {
         $this->projectModel = model('ProjectModel');
         $this->likeModel = model('LikeModel');
         $this->commentModel = model('CommentModel');
+        $this->bookmarkModel = model('BookmarkModel');
+        $this->followModel = model('FollowModel');
+        $this->notificationModel = model('NotificationModel');
     }
 
     /**
@@ -35,6 +44,13 @@ class Api extends BaseController
             ], 401);
         }
 
+        if ($this->isBanned()) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Hesabınız askıya alınmıştır.',
+            ], 403);
+        }
+
         // Check if project exists
         $project = $this->projectModel->find($projectId);
         if (!$project) {
@@ -45,6 +61,16 @@ class Api extends BaseController
         }
 
         $result = $this->likeModel->toggleLike($this->currentUser['id'], $projectId);
+
+        // Create notification if liked (not for own project)
+        if ($result['action'] === 'liked' && $project['user_id'] != $this->currentUser['id']) {
+            $this->notificationModel->createNotification(
+                $project['user_id'],
+                $this->currentUser['id'],
+                'like',
+                $projectId
+            );
+        }
 
         return $this->respond([
             'success' => true,
@@ -65,6 +91,13 @@ class Api extends BaseController
                 'message' => 'Yorum yapmak için giriş yapmalısınız.',
                 'requireAuth' => true,
             ], 401);
+        }
+
+        if ($this->isBanned()) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Hesabınız askıya alınmıştır.',
+            ], 403);
         }
 
         $projectId = $this->request->getPost('project_id');
@@ -115,6 +148,16 @@ class Api extends BaseController
                 'success' => false,
                 'message' => 'Yorum eklenirken bir hata oluştu.',
             ], 500);
+        }
+
+        // Create notification (not for own project)
+        if ($project['user_id'] != $this->currentUser['id']) {
+            $this->notificationModel->createNotification(
+                $project['user_id'],
+                $this->currentUser['id'],
+                'comment',
+                (int) $projectId
+            );
         }
 
         // Format date for display
@@ -192,6 +235,102 @@ class Api extends BaseController
             'totalPages'    => $totalPages,
             'totalProjects' => $totalProjects,
             'hasMore'       => $page < $totalPages,
+        ]);
+    }
+
+    /**
+     * Toggle bookmark on a project
+     */
+    public function bookmark(int $projectId)
+    {
+        if (!$this->isLoggedIn()) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Kaydetmek için giriş yapmalısınız.',
+                'requireAuth' => true,
+            ], 401);
+        }
+
+        if ($this->isBanned()) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Hesabınız askıya alınmıştır.',
+            ], 403);
+        }
+
+        // Check if project exists
+        $project = $this->projectModel->find($projectId);
+        if (!$project) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Proje bulunamadı.',
+            ], 404);
+        }
+
+        $result = $this->bookmarkModel->toggleBookmark($this->currentUser['id'], $projectId);
+
+        return $this->respond([
+            'success'    => true,
+            'action'     => $result['action'],
+            'bookmarked' => $result['bookmarked'],
+            'message'    => $result['bookmarked'] ? 'Kaydedildi!' : 'Kayıt kaldırıldı.',
+        ]);
+    }
+
+    /**
+     * Toggle follow on a user
+     */
+    public function follow(int $userId)
+    {
+        if (!$this->isLoggedIn()) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Takip etmek için giriş yapmalısınız.',
+                'requireAuth' => true,
+            ], 401);
+        }
+
+        if ($this->isBanned()) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Hesabınız askıya alınmıştır.',
+            ], 403);
+        }
+
+        // Check if user exists
+        $userModel = model('UserModel');
+        $targetUser = $userModel->find($userId);
+        if (!$targetUser) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Kullanıcı bulunamadı.',
+            ], 404);
+        }
+
+        $result = $this->followModel->toggleFollow($this->currentUser['id'], $userId);
+
+        if ($result['action'] === 'error') {
+            return $this->respond([
+                'success' => false,
+                'message' => $result['message'],
+            ], 400);
+        }
+
+        // Create notification if followed (not for self)
+        if ($result['action'] === 'followed') {
+            $this->notificationModel->createNotification(
+                $userId,
+                $this->currentUser['id'],
+                'follow',
+                null
+            );
+        }
+
+        return $this->respond([
+            'success'   => true,
+            'action'    => $result['action'],
+            'following' => $result['following'],
+            'message'   => $result['following'] ? 'Takip ediyorsunuz!' : 'Takibi bıraktınız.',
         ]);
     }
 }

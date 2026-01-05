@@ -31,7 +31,15 @@ $routes->get('tool/(:segment)', 'Tools::show/$1');
 
 // Users
 $routes->get('user/(:num)', 'Users::profile/$1');
+$routes->get('user/(:num)/bookmarks', 'Users::bookmarks/$1');
 $routes->post('user/update-bio', 'Users::updateBio');
+
+// Notifications
+$routes->get('notifications', 'Notifications::index');
+$routes->post('notifications/mark-all-read', 'Notifications::markAllRead');
+
+// Feed
+$routes->get('feed', 'Users::feed');
 
 // API endpoints
 $routes->group('api', function($routes) {
@@ -39,6 +47,17 @@ $routes->group('api', function($routes) {
     $routes->post('comment', 'Api::comment');
     $routes->delete('comment/(:num)', 'Api::deleteComment/$1');
     $routes->get('projects', 'Api::projects');
+
+    // Bookmarks
+    $routes->post('bookmark/(:num)', 'Api::bookmark/$1');
+
+    // Follow
+    $routes->post('follow/(:num)', 'Api::follow/$1');
+
+    // Notifications
+    $routes->get('notifications', 'Notifications::getRecent');
+    $routes->post('notifications/(:num)/read', 'Notifications::markRead/$1');
+    $routes->get('notifications/unread-count', 'Notifications::unreadCount');
 });
 
 // Admin
