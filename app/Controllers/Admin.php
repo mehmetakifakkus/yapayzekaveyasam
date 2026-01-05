@@ -300,4 +300,58 @@ class Admin extends BaseController
 
         return redirect()->back()->with('success', 'Kullanıcı yasağı kaldırıldı.');
     }
+
+    /**
+     * Settings page
+     */
+    public function settings()
+    {
+        $this->requireAdmin();
+
+        $currentTheme = getenv('APP_THEME') ?: 'default';
+
+        return view('admin/settings', $this->getViewData([
+            'title' => 'Ayarlar - Admin',
+            'currentTheme' => $currentTheme,
+        ]));
+    }
+
+    /**
+     * Update settings
+     */
+    public function updateSettings()
+    {
+        $this->requireAdmin();
+
+        $theme = $this->request->getPost('theme');
+        $validThemes = ['default', 'emerald', 'amber', 'ocean', 'mono'];
+
+        if (!in_array($theme, $validThemes)) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Geçersiz tema seçimi.',
+            ]);
+        }
+
+        // Update .env file
+        $envPath = ROOTPATH . '.env';
+        if (file_exists($envPath)) {
+            $envContent = file_get_contents($envPath);
+
+            // Check if APP_THEME exists
+            if (preg_match('/^APP_THEME\s*=.*/m', $envContent)) {
+                $envContent = preg_replace('/^APP_THEME\s*=.*/m', "APP_THEME = {$theme}", $envContent);
+            } else {
+                $envContent .= "\nAPP_THEME = {$theme}\n";
+            }
+
+            file_put_contents($envPath, $envContent);
+        }
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Tema güncellendi.',
+            'theme' => $theme,
+        ]);
+    }
 }

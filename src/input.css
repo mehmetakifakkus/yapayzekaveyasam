@@ -20,6 +20,86 @@
 @source "../app/Views/**/*.php";
 @source "../public/**/*.js";
 
+/* Theme CSS Variables */
+:root {
+  --theme-gradient-start: #818cf8;
+  --theme-gradient-mid: #a78bfa;
+  --theme-gradient-end: #f472b6;
+  --theme-accent: #a855f7;
+  --theme-accent-hover: #9333ea;
+  --theme-accent-rgb: 168, 85, 247;
+  --theme-btn-start: #6366f1;
+  --theme-btn-mid: #a855f7;
+  --theme-btn-end: #ec4899;
+  --theme-badge-bg: rgba(99, 102, 241, 0.2);
+  --theme-badge-border: rgba(99, 102, 241, 0.3);
+  --theme-badge-text: #a5b4fc;
+}
+
+/* Emerald Theme */
+[data-theme="emerald"] {
+  --theme-gradient-start: #34d399;
+  --theme-gradient-mid: #2dd4bf;
+  --theme-gradient-end: #22d3ee;
+  --theme-accent: #10b981;
+  --theme-accent-hover: #059669;
+  --theme-accent-rgb: 16, 185, 129;
+  --theme-btn-start: #10b981;
+  --theme-btn-mid: #14b8a6;
+  --theme-btn-end: #06b6d4;
+  --theme-badge-bg: rgba(16, 185, 129, 0.2);
+  --theme-badge-border: rgba(16, 185, 129, 0.3);
+  --theme-badge-text: #6ee7b7;
+}
+
+/* Amber Theme */
+[data-theme="amber"] {
+  --theme-gradient-start: #fbbf24;
+  --theme-gradient-mid: #f97316;
+  --theme-gradient-end: #ef4444;
+  --theme-accent: #f59e0b;
+  --theme-accent-hover: #d97706;
+  --theme-accent-rgb: 245, 158, 11;
+  --theme-btn-start: #f59e0b;
+  --theme-btn-mid: #f97316;
+  --theme-btn-end: #ef4444;
+  --theme-badge-bg: rgba(245, 158, 11, 0.2);
+  --theme-badge-border: rgba(245, 158, 11, 0.3);
+  --theme-badge-text: #fcd34d;
+}
+
+/* Ocean Theme */
+[data-theme="ocean"] {
+  --theme-gradient-start: #38bdf8;
+  --theme-gradient-mid: #3b82f6;
+  --theme-gradient-end: #6366f1;
+  --theme-accent: #0ea5e9;
+  --theme-accent-hover: #0284c7;
+  --theme-accent-rgb: 14, 165, 233;
+  --theme-btn-start: #0ea5e9;
+  --theme-btn-mid: #3b82f6;
+  --theme-btn-end: #6366f1;
+  --theme-badge-bg: rgba(14, 165, 233, 0.2);
+  --theme-badge-border: rgba(14, 165, 233, 0.3);
+  --theme-badge-text: #7dd3fc;
+}
+
+/* Mono Theme */
+[data-theme="mono"] {
+  --theme-gradient-start: #f8fafc;
+  --theme-gradient-mid: #e2e8f0;
+  --theme-gradient-end: #cbd5e1;
+  --theme-accent: #f8fafc;
+  --theme-accent-hover: #e2e8f0;
+  --theme-accent-rgb: 248, 250, 252;
+  --theme-btn-start: #475569;
+  --theme-btn-mid: #64748b;
+  --theme-btn-end: #94a3b8;
+  --theme-badge-bg: rgba(71, 85, 105, 0.3);
+  --theme-badge-border: rgba(100, 116, 139, 0.3);
+  --theme-badge-text: #cbd5e1;
+}
+
 /* Base Styles */
 @layer base {
   body {
@@ -37,7 +117,7 @@
 }
 
 @utility gradient-text {
-  background-image: linear-gradient(to right, #818cf8, #a78bfa, #f472b6);
+  background-image: linear-gradient(to right, var(--theme-gradient-start), var(--theme-gradient-mid), var(--theme-gradient-end));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -45,13 +125,13 @@
 
 @utility btn-primary {
   padding: 0.75rem 1.5rem;
-  background-image: linear-gradient(to right, #6366f1, #a855f7, #ec4899);
+  background-image: linear-gradient(to right, var(--theme-btn-start), var(--theme-btn-mid), var(--theme-btn-end));
   border-radius: 0.75rem;
   font-weight: 600;
   color: white;
   cursor: pointer;
   transition: all 0.3s ease-out;
-  box-shadow: 0 10px 25px -5px rgba(168, 85, 247, 0.25);
+  box-shadow: 0 10px 25px -5px rgba(var(--theme-accent-rgb), 0.25);
 }
 
 @utility btn-secondary {
@@ -131,12 +211,12 @@
   align-items: center;
   gap: 0.375rem;
   padding: 0.375rem 0.75rem;
-  background-image: linear-gradient(to right, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  background: var(--theme-badge-bg);
+  border: 1px solid var(--theme-badge-border);
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 500;
-  color: #a5b4fc;
+  color: var(--theme-badge-text);
 }
 
 @utility nav-link {
@@ -198,7 +278,7 @@
 /* Hover and Focus States - Standard CSS */
 .btn-primary:hover {
   transform: scale(1.05);
-  box-shadow: 0 15px 35px -5px rgba(168, 85, 247, 0.4);
+  box-shadow: 0 15px 35px -5px rgba(var(--theme-accent-rgb), 0.4);
 }
 
 .btn-secondary:hover {
@@ -215,18 +295,18 @@
 .textarea-field:focus,
 .select-field:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.5);
-  border-color: #a855f7;
+  box-shadow: 0 0 0 2px rgba(var(--theme-accent-rgb), 0.5);
+  border-color: var(--theme-accent);
 }
 
 .project-card:hover {
-  border-color: rgba(168, 85, 247, 0.5);
-  box-shadow: 0 25px 50px -12px rgba(168, 85, 247, 0.15);
+  border-color: rgba(var(--theme-accent-rgb), 0.5);
+  box-shadow: 0 25px 50px -12px rgba(var(--theme-accent-rgb), 0.15);
 }
 
 .ai-badge:hover {
-  border-color: rgba(168, 85, 247, 0.5);
-  color: #c4b5fd;
+  border-color: rgba(var(--theme-accent-rgb), 0.5);
+  color: var(--theme-badge-text);
 }
 
 .nav-link:hover {
@@ -249,14 +329,14 @@
 }
 
 .filter-chip:hover {
-  border-color: rgba(168, 85, 247, 0.5);
-  color: #c4b5fd;
+  border-color: rgba(var(--theme-accent-rgb), 0.5);
+  color: var(--theme-badge-text);
 }
 
 .filter-chip.active {
-  background-color: rgba(168, 85, 247, 0.2);
-  border-color: rgba(168, 85, 247, 0.5);
-  color: #c4b5fd;
+  background-color: rgba(var(--theme-accent-rgb), 0.2);
+  border-color: rgba(var(--theme-accent-rgb), 0.5);
+  color: var(--theme-badge-text);
 }
 
 /* Custom Scrollbar */
