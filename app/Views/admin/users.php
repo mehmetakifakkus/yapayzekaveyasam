@@ -9,9 +9,12 @@
             <h1 class="text-3xl font-bold text-white">Kullanıcı Yönetimi</h1>
             <p class="text-slate-400 mt-1">Toplam <?= number_format($totalUsers) ?> kullanıcı</p>
         </div>
-        <a href="<?= base_url('admin') ?>" class="btn-secondary">
-            Dashboard
-        </a>
+        <div class="flex gap-3">
+            <a href="<?= base_url('admin') ?>" class="btn-secondary">Dashboard</a>
+            <a href="<?= base_url('admin/analytics') ?>" class="btn-secondary">Analytics</a>
+            <a href="<?= base_url('admin/projects') ?>" class="btn-secondary">Projeler</a>
+            <a href="<?= base_url('admin/settings') ?>" class="btn-secondary">Ayarlar</a>
+        </div>
     </div>
 
     <!-- Users Table -->

@@ -12,7 +12,8 @@
         <div class="flex gap-3">
             <a href="<?= base_url('admin') ?>" class="btn-secondary">Dashboard</a>
             <a href="<?= base_url('admin/projects') ?>" class="btn-secondary">Projeler</a>
-            <a href="<?= base_url('admin/users') ?>" class="btn-secondary">Kullanicilar</a>
+            <a href="<?= base_url('admin/users') ?>" class="btn-secondary">Kullanıcılar</a>
+            <a href="<?= base_url('admin/settings') ?>" class="btn-secondary">Ayarlar</a>
         </div>
     </div>
 

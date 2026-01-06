@@ -9,9 +9,12 @@
             <h1 class="text-3xl font-bold">Site Ayarları</h1>
             <p class="opacity-60 mt-1">Tema ve görünüm ayarlarını yönetin</p>
         </div>
-        <a href="<?= base_url('admin') ?>" class="btn-secondary">
-            ← Dashboard
-        </a>
+        <div class="flex gap-3">
+            <a href="<?= base_url('admin') ?>" class="btn-secondary">Dashboard</a>
+            <a href="<?= base_url('admin/analytics') ?>" class="btn-secondary">Analytics</a>
+            <a href="<?= base_url('admin/projects') ?>" class="btn-secondary">Projeler</a>
+            <a href="<?= base_url('admin/users') ?>" class="btn-secondary">Kullanıcılar</a>
+        </div>
     </div>
 
     <!-- Theme Settings -->
