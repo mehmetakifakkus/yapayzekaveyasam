@@ -67,6 +67,7 @@ $routes->group('admin', function($routes) {
     $routes->post('projects/(:num)/approve', 'Admin::approveProject/$1');
     $routes->post('projects/(:num)/reject', 'Admin::rejectProject/$1');
     $routes->delete('projects/(:num)', 'Admin::deleteProject/$1');
+    $routes->post('projects/(:num)/refresh-screenshot', 'Admin::refreshScreenshot/$1');
     $routes->get('users', 'Admin::users');
     $routes->post('users/(:num)/ban', 'Admin::banUser/$1');
     $routes->post('users/(:num)/unban', 'Admin::unbanUser/$1');

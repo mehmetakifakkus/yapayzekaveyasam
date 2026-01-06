@@ -9,6 +9,7 @@ use App\Models\AiToolModel;
 use App\Models\LikeModel;
 use App\Models\CommentModel;
 use App\Models\NotificationModel;
+use App\Libraries\ScreenshotService;
 
 class Admin extends BaseController
 {
@@ -324,7 +325,7 @@ class Admin extends BaseController
         $this->requireAdmin();
 
         $theme = $this->request->getPost('theme');
-        $validThemes = ['default', 'emerald', 'amber', 'ocean', 'mono'];
+        $validThemes = ['default', 'emerald', 'amber', 'ocean', 'mono', 'light-white', 'light-cream', 'light-gray'];
 
         if (!in_array($theme, $validThemes)) {
             return $this->response->setJSON([
@@ -352,6 +353,63 @@ class Admin extends BaseController
             'success' => true,
             'message' => 'Tema güncellendi.',
             'theme' => $theme,
+        ]);
+    }
+
+    /**
+     * Refresh project screenshot
+     */
+    public function refreshScreenshot(int $id)
+    {
+        $this->requireAdmin();
+
+        $project = $this->projectModel->find($id);
+
+        if (!$project) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Proje bulunamadı.',
+            ]);
+        }
+
+        if (empty($project['website_url'])) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Proje için website URL\'si tanımlı değil.',
+            ]);
+        }
+
+        $screenshotService = new ScreenshotService();
+
+        if (!$screenshotService->isConfigured()) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Screenshot servisi yapılandırılmamış. .env dosyasında THUMBNAIL_WS_API_KEY ayarlayın.',
+            ]);
+        }
+
+        // Delete old screenshot if exists
+        if ($project['screenshot'] && file_exists(FCPATH . $project['screenshot'])) {
+            unlink(FCPATH . $project['screenshot']);
+        }
+
+        // Capture new screenshot
+        $screenshotPath = $screenshotService->capture($project['website_url']);
+
+        if (!$screenshotPath) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Screenshot alınamadı. Lütfen URL\'nin erişilebilir olduğundan emin olun.',
+            ]);
+        }
+
+        // Update project
+        $this->projectModel->update($id, ['screenshot' => $screenshotPath]);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Screenshot başarıyla güncellendi.',
+            'screenshot' => base_url($screenshotPath),
         ]);
     }
 }

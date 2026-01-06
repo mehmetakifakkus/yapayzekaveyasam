@@ -7,6 +7,7 @@ use App\Models\CategoryModel;
 use App\Models\AiToolModel;
 use App\Models\LikeModel;
 use App\Models\CommentModel;
+use App\Libraries\ScreenshotService;
 
 class Projects extends BaseController
 {
@@ -165,8 +166,11 @@ class Projects extends BaseController
         ];
 
         // Handle screenshot upload
+        $screenshotPath = null;
         $screenshot = $this->request->getFile('screenshot');
+
         if ($screenshot && $screenshot->isValid() && !$screenshot->hasMoved()) {
+            // Manual upload
             $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
             if (!in_array($screenshot->getMimeType(), $allowedTypes)) {
                 return redirect()->back()->withInput()->with('error', 'Sadece resim dosyaları yüklenebilir.');
@@ -179,7 +183,17 @@ class Projects extends BaseController
 
             $newName = $screenshot->getRandomName();
             $screenshot->move(FCPATH . 'uploads/screenshots', $newName);
-            $data['screenshot'] = 'uploads/screenshots/' . $newName;
+            $screenshotPath = 'uploads/screenshots/' . $newName;
+        } else {
+            // Try automatic screenshot capture
+            $screenshotService = new ScreenshotService();
+            if ($screenshotService->isConfigured()) {
+                $screenshotPath = $screenshotService->capture($data['website_url']);
+            }
+        }
+
+        if ($screenshotPath) {
+            $data['screenshot'] = $screenshotPath;
         }
 
         $projectId = $this->projectModel->insert($data);
@@ -301,6 +315,15 @@ class Projects extends BaseController
             $newName = $screenshot->getRandomName();
             $screenshot->move(FCPATH . 'uploads/screenshots', $newName);
             $data['screenshot'] = 'uploads/screenshots/' . $newName;
+        } elseif (!$project['screenshot'] && $data['website_url']) {
+            // If no existing screenshot and URL changed, try automatic capture
+            $screenshotService = new ScreenshotService();
+            if ($screenshotService->isConfigured()) {
+                $screenshotPath = $screenshotService->capture($data['website_url']);
+                if ($screenshotPath) {
+                    $data['screenshot'] = $screenshotPath;
+                }
+            }
         }
 
         $this->projectModel->update($project['id'], $data);
