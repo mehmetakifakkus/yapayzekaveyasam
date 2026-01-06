@@ -16,6 +16,7 @@ class CommentModel extends Model
         'user_id',
         'project_id',
         'content',
+        'parent_id',
     ];
 
     protected bool $allowEmptyInserts = false;
@@ -33,16 +34,42 @@ class CommentModel extends Model
     ];
 
     /**
-     * Get comments for a project with user info
+     * Get comments for a project with user info (nested structure)
      */
-    public function getByProjectId(int $projectId, int $limit = 50): array
+    public function getByProjectId(int $projectId, int $limit = 100): array
     {
-        return $this->select('comments.*, users.name as user_name, users.avatar as user_avatar')
+        $comments = $this->select('comments.*, users.name as user_name, users.avatar as user_avatar')
             ->join('users', 'users.id = comments.user_id')
             ->where('comments.project_id', $projectId)
-            ->orderBy('comments.created_at', 'DESC')
+            ->orderBy('comments.created_at', 'ASC')
             ->limit($limit)
             ->findAll();
+
+        return $this->buildTree($comments);
+    }
+
+    /**
+     * Build nested comment tree
+     */
+    private function buildTree(array $comments): array
+    {
+        $indexed = [];
+        foreach ($comments as &$comment) {
+            $comment['replies'] = [];
+            $indexed[$comment['id']] = &$comment;
+        }
+
+        $tree = [];
+        foreach ($comments as &$comment) {
+            if ($comment['parent_id'] && isset($indexed[$comment['parent_id']])) {
+                $indexed[$comment['parent_id']]['replies'][] = &$comment;
+            } else {
+                $tree[] = &$comment;
+            }
+        }
+
+        // Reverse to show newest first for top-level
+        return array_reverse($tree);
     }
 
     /**
@@ -56,20 +83,23 @@ class CommentModel extends Model
     /**
      * Add a comment
      */
-    public function addComment(int $userId, int $projectId, string $content): array|bool
+    public function addComment(int $userId, int $projectId, string $content, ?int $parentId = null): array|bool
     {
         $data = [
             'user_id'    => $userId,
             'project_id' => $projectId,
             'content'    => $content,
+            'parent_id'  => $parentId,
         ];
 
         if ($this->insert($data)) {
             $commentId = $this->getInsertID();
-            return $this->select('comments.*, users.name as user_name, users.avatar as user_avatar')
+            $comment = $this->select('comments.*, users.name as user_name, users.avatar as user_avatar')
                 ->join('users', 'users.id = comments.user_id')
                 ->where('comments.id', $commentId)
                 ->first();
+            $comment['replies'] = [];
+            return $comment;
         }
 
         return false;

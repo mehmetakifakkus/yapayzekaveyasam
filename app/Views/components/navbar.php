@@ -31,6 +31,18 @@
             <div class="flex items-center gap-4">
                 <a href="<?= base_url('projects') ?>" class="nav-link hidden sm:block">Projeler</a>
 
+                <!-- Theme Toggle -->
+                <button onclick="toggleDarkMode()" class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors" title="Tema Değiştir" id="theme-toggle-btn">
+                    <!-- Sun icon (shown in dark mode) -->
+                    <svg id="theme-icon-sun" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    <!-- Moon icon (shown in light mode) -->
+                    <svg id="theme-icon-moon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+
                 <?php if ($isLoggedIn): ?>
                     <!-- Add Project Button -->
                     <a href="<?= base_url('projects/create') ?>" class="btn-primary text-sm py-2 hidden sm:flex items-center gap-2">
@@ -371,3 +383,59 @@ function changeTheme(theme) {
 }
 </script>
 <?php endif; ?>
+
+<script>
+// Dark mode toggle (works for all users)
+const lightThemes = ['light-white', 'light-cream', 'light-gray'];
+const defaultDarkTheme = 'default';
+const defaultLightTheme = 'light-white';
+
+function getCurrentTheme() {
+    return document.getElementById('html-root').getAttribute('data-theme') || 'default';
+}
+
+function isLightTheme(theme) {
+    return lightThemes.includes(theme);
+}
+
+function updateThemeIcon() {
+    const current = getCurrentTheme();
+    const sunIcon = document.getElementById('theme-icon-sun');
+    const moonIcon = document.getElementById('theme-icon-moon');
+
+    if (isLightTheme(current)) {
+        sunIcon.classList.add('hidden');
+        moonIcon.classList.remove('hidden');
+    } else {
+        sunIcon.classList.remove('hidden');
+        moonIcon.classList.add('hidden');
+    }
+}
+
+function toggleDarkMode() {
+    const current = getCurrentTheme();
+    const newTheme = isLightTheme(current) ? defaultDarkTheme : defaultLightTheme;
+
+    // Update UI immediately
+    document.getElementById('html-root').setAttribute('data-theme', newTheme);
+    updateThemeIcon();
+
+    // Save to localStorage for non-logged users
+    localStorage.setItem('theme', newTheme);
+
+    // If logged in, also save to server
+    <?php if ($isLoggedIn): ?>
+    fetch('<?= base_url('user/update-theme') ?>', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: 'theme=' + encodeURIComponent(newTheme)
+    });
+    <?php endif; ?>
+}
+
+// Initialize icon on page load
+document.addEventListener('DOMContentLoaded', updateThemeIcon);
+</script>

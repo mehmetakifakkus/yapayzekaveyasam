@@ -102,6 +102,7 @@ class Api extends BaseController
 
         $projectId = $this->request->getPost('project_id');
         $content = trim($this->request->getPost('content') ?? '');
+        $parentId = $this->request->getPost('parent_id');
 
         // Validate
         if (!$projectId) {
@@ -140,7 +141,8 @@ class Api extends BaseController
         $comment = $this->commentModel->addComment(
             $this->currentUser['id'],
             (int) $projectId,
-            $content
+            $content,
+            $parentId ? (int) $parentId : null
         );
 
         if (!$comment) {

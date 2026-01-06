@@ -193,26 +193,54 @@
                     <?php if (empty($comments)): ?>
                         <p id="no-comments" class="text-slate-500 text-center py-4">Henüz yorum yok. İlk yorumu siz yapın!</p>
                     <?php else: ?>
-                        <?php foreach ($comments as $comment): ?>
-                        <div class="comment-box" data-comment-id="<?= $comment['id'] ?>">
+                        <?php
+                        function renderComment($comment, $isLoggedIn, $depth = 0) {
+                            $marginClass = $depth > 0 ? 'ml-8 mt-3 pl-4 border-l-2 border-slate-700' : '';
+                        ?>
+                        <div class="comment-box <?= $marginClass ?>" data-comment-id="<?= $comment['id'] ?>">
                             <div class="flex items-start gap-3">
                                 <?php if (!empty($comment['user_avatar'])): ?>
-                                    <img src="<?= esc($comment['user_avatar']) ?>" alt="" class="w-8 h-8 rounded-full" referrerpolicy="no-referrer">
+                                    <img src="<?= esc($comment['user_avatar']) ?>" alt="" class="w-8 h-8 rounded-full flex-shrink-0" referrerpolicy="no-referrer">
                                 <?php else: ?>
-                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-medium">
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
                                         <?= strtoupper(substr($comment['user_name'], 0, 1)) ?>
                                     </div>
                                 <?php endif; ?>
-                                <div class="flex-1">
+                                <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-2 mb-1">
                                         <span class="font-medium text-white text-sm"><?= esc($comment['user_name']) ?></span>
                                         <span class="text-xs text-slate-500"><?= date('d M Y, H:i', strtotime($comment['created_at'])) ?></span>
                                     </div>
                                     <p class="text-slate-300 text-sm"><?= nl2br(esc($comment['content'])) ?></p>
+                                    <?php if ($isLoggedIn && $depth < 2): ?>
+                                    <button onclick="showReplyForm(<?= $comment['id'] ?>)" class="text-xs text-purple-400 hover:text-purple-300 mt-2 flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                                        </svg>
+                                        Yanıtla
+                                    </button>
+                                    <div id="reply-form-<?= $comment['id'] ?>" class="hidden mt-3">
+                                        <textarea class="textarea-field text-sm mb-2" rows="2" placeholder="Yanıtınızı yazın..." maxlength="1000"></textarea>
+                                        <div class="flex gap-2">
+                                            <button onclick="submitReply(<?= $comment['id'] ?>)" class="btn-primary text-xs py-1.5 px-3">Gönder</button>
+                                            <button onclick="hideReplyForm(<?= $comment['id'] ?>)" class="btn-secondary text-xs py-1.5 px-3">İptal</button>
+                                        </div>
+                                    </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
+                            <?php if (!empty($comment['replies'])): ?>
+                                <?php foreach ($comment['replies'] as $reply): ?>
+                                    <?php renderComment($reply, $isLoggedIn, $depth + 1); ?>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </div>
-                        <?php endforeach; ?>
+                        <?php
+                        }
+                        foreach ($comments as $comment) {
+                            renderComment($comment, $isLoggedIn);
+                        }
+                        ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -482,6 +510,71 @@ function copyShareLink() {
         document.body.removeChild(input);
         showToast('Link kopyalandı!', 'success');
     });
+}
+
+// Reply functions
+function showReplyForm(commentId) {
+    document.getElementById(`reply-form-${commentId}`).classList.remove('hidden');
+}
+
+function hideReplyForm(commentId) {
+    const form = document.getElementById(`reply-form-${commentId}`);
+    form.classList.add('hidden');
+    form.querySelector('textarea').value = '';
+}
+
+async function submitReply(parentId) {
+    const form = document.getElementById(`reply-form-${parentId}`);
+    const textarea = form.querySelector('textarea');
+    const content = textarea.value.trim();
+
+    if (!content) return;
+
+    try {
+        const formData = new FormData();
+        formData.append('project_id', projectId);
+        formData.append('content', content);
+        formData.append('parent_id', parentId);
+
+        const response = await fetch('<?= base_url('api/comment') ?>', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            const parentComment = document.querySelector(`[data-comment-id="${parentId}"]`);
+            const avatar = data.comment.user_avatar
+                ? `<img src="${data.comment.user_avatar}" alt="" class="w-8 h-8 rounded-full flex-shrink-0" referrerpolicy="no-referrer">`
+                : `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-medium flex-shrink-0">${data.comment.user_name.charAt(0).toUpperCase()}</div>`;
+
+            const replyHtml = `
+                <div class="comment-box ml-8 mt-3 pl-4 border-l-2 border-slate-700 fade-in" data-comment-id="${data.comment.id}">
+                    <div class="flex items-start gap-3">
+                        ${avatar}
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-medium text-white text-sm">${data.comment.user_name}</span>
+                                <span class="text-xs text-slate-500">${data.comment.formatted_date}</span>
+                            </div>
+                            <p class="text-slate-300 text-sm">${data.comment.content.replace(/\n/g, '<br>')}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            parentComment.insertAdjacentHTML('beforeend', replyHtml);
+            hideReplyForm(parentId);
+            document.getElementById('comments-count').textContent = data.count;
+            showToast('Yanıt eklendi', 'success');
+        } else {
+            alert(data.message || 'Bir hata oluştu');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
 }
 </script>
 <?= $this->endSection() ?>
