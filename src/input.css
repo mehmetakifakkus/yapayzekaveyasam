@@ -475,6 +475,48 @@
   background-color: rgba(var(--theme-accent-rgb), 0.1);
 }
 
+/* Share Buttons */
+.share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background-color: var(--theme-btn-secondary-bg);
+  border: 1px solid var(--theme-card-border);
+  color: var(--theme-text-muted);
+  transition: all 0.2s;
+}
+
+.share-btn:hover {
+  transform: scale(1.1);
+}
+
+.share-btn-twitter:hover {
+  background-color: rgba(29, 161, 242, 0.2);
+  border-color: rgba(29, 161, 242, 0.5);
+  color: #1da1f2;
+}
+
+.share-btn-linkedin:hover {
+  background-color: rgba(0, 119, 181, 0.2);
+  border-color: rgba(0, 119, 181, 0.5);
+  color: #0077b5;
+}
+
+.share-btn-whatsapp:hover {
+  background-color: rgba(37, 211, 102, 0.2);
+  border-color: rgba(37, 211, 102, 0.5);
+  color: #25d366;
+}
+
+.share-btn-copy:hover {
+  background-color: rgba(var(--theme-accent-rgb), 0.2);
+  border-color: rgba(var(--theme-accent-rgb), 0.5);
+  color: var(--theme-accent);
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
