@@ -129,7 +129,7 @@
                     <?php foreach ($recentUsers as $user): ?>
                     <div class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg">
                         <?php if (!empty($user['avatar'])): ?>
-                            <img src="<?= esc($user['avatar']) ?>" alt="" class="w-10 h-10 rounded-full object-cover">
+                            <img src="<?= esc($user['avatar']) ?>" alt="" class="w-10 h-10 rounded-full object-cover" referrerpolicy="no-referrer">
                         <?php else: ?>
                             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold">
                                 <?= strtoupper(substr($user['name'], 0, 1)) ?>

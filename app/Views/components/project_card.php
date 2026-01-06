@@ -66,7 +66,7 @@
                 <!-- User -->
                 <div class="flex items-center gap-2">
                     <?php if (!empty($project['user_avatar'])): ?>
-                        <img src="<?= esc($project['user_avatar']) ?>" alt="" class="w-6 h-6 rounded-full">
+                        <img src="<?= esc($project['user_avatar']) ?>" alt="" class="w-6 h-6 rounded-full" referrerpolicy="no-referrer">
                     <?php else: ?>
                         <div class="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-medium">
                             <?= strtoupper(substr($project['user_name'] ?? 'U', 0, 1)) ?>

@@ -42,7 +42,7 @@
                             <td class="px-4 py-4">
                                 <div class="flex items-center gap-3">
                                     <?php if (!empty($user['avatar'])): ?>
-                                        <img src="<?= esc($user['avatar']) ?>" alt="" class="w-10 h-10 rounded-full object-cover">
+                                        <img src="<?= esc($user['avatar']) ?>" alt="" class="w-10 h-10 rounded-full object-cover" referrerpolicy="no-referrer">
                                     <?php else: ?>
                                         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold">
                                             <?= strtoupper(substr($user['name'], 0, 1)) ?>

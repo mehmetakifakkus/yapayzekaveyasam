@@ -81,7 +81,7 @@
                             class="flex items-center gap-2 p-1 rounded-full hover:bg-slate-800 transition-colors"
                         >
                             <?php if ($currentUser['avatar']): ?>
-                                <img src="<?= esc($currentUser['avatar']) ?>" alt="<?= esc($currentUser['name']) ?>" class="w-8 h-8 rounded-full object-cover">
+                                <img src="<?= esc($currentUser['avatar']) ?>" alt="<?= esc($currentUser['name']) ?>" class="w-8 h-8 rounded-full object-cover" referrerpolicy="no-referrer">
                             <?php else: ?>
                                 <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-sm font-medium">
                                     <?= strtoupper(substr($currentUser['name'], 0, 1)) ?>

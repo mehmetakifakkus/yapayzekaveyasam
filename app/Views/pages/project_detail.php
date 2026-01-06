@@ -138,7 +138,7 @@
                         <div class="comment-box" data-comment-id="<?= $comment['id'] ?>">
                             <div class="flex items-start gap-3">
                                 <?php if (!empty($comment['user_avatar'])): ?>
-                                    <img src="<?= esc($comment['user_avatar']) ?>" alt="" class="w-8 h-8 rounded-full">
+                                    <img src="<?= esc($comment['user_avatar']) ?>" alt="" class="w-8 h-8 rounded-full" referrerpolicy="no-referrer">
                                 <?php else: ?>
                                     <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-medium">
                                         <?= strtoupper(substr($comment['user_name'], 0, 1)) ?>
@@ -166,7 +166,7 @@
                 <h3 class="text-sm text-slate-400 mb-4">Geliştirici</h3>
                 <a href="<?= base_url('user/' . $project['user_id']) ?>" class="flex items-center gap-3 group">
                     <?php if (!empty($project['user_avatar'])): ?>
-                        <img src="<?= esc($project['user_avatar']) ?>" alt="" class="w-12 h-12 rounded-full">
+                        <img src="<?= esc($project['user_avatar']) ?>" alt="" class="w-12 h-12 rounded-full" referrerpolicy="no-referrer">
                     <?php else: ?>
                         <div class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-medium">
                             <?= strtoupper(substr($project['user_name'], 0, 1)) ?>

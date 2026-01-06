@@ -43,7 +43,7 @@
                         <?php foreach ($followingUsers as $followedUser): ?>
                             <a href="<?= base_url('user/' . $followedUser['id']) ?>" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700/50 transition-colors">
                                 <?php if (!empty($followedUser['avatar'])): ?>
-                                    <img src="<?= esc($followedUser['avatar']) ?>" alt="" class="w-10 h-10 rounded-full">
+                                    <img src="<?= esc($followedUser['avatar']) ?>" alt="" class="w-10 h-10 rounded-full" referrerpolicy="no-referrer">
                                 <?php else: ?>
                                     <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-sm font-medium">
                                         <?= strtoupper(substr($followedUser['name'], 0, 1)) ?>

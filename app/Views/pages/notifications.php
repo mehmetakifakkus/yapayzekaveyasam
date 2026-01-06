@@ -61,7 +61,7 @@
                 <a href="<?= $url ?>" class="flex items-start gap-4 p-4 hover:bg-slate-700/30 transition-colors <?= !$notification['is_read'] ? 'bg-purple-500/5' : '' ?>">
                     <!-- Actor Avatar -->
                     <?php if (!empty($notification['actor_avatar'])): ?>
-                        <img src="<?= esc($notification['actor_avatar']) ?>" alt="" class="w-10 h-10 rounded-full flex-shrink-0">
+                        <img src="<?= esc($notification['actor_avatar']) ?>" alt="" class="w-10 h-10 rounded-full flex-shrink-0" referrerpolicy="no-referrer">
                     <?php else: ?>
                         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
                             <?= strtoupper(substr($notification['actor_name'] ?? 'U', 0, 1)) ?>

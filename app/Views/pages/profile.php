@@ -8,7 +8,7 @@
         <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
             <!-- Avatar -->
             <?php if (!empty($user['avatar'])): ?>
-                <img src="<?= esc($user['avatar']) ?>" alt="<?= esc($user['name']) ?>" class="w-24 h-24 rounded-full object-cover">
+                <img src="<?= esc($user['avatar']) ?>" alt="<?= esc($user['name']) ?>" class="w-24 h-24 rounded-full object-cover" referrerpolicy="no-referrer">
             <?php else: ?>
                 <div class="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white text-3xl font-bold">
                     <?= strtoupper(substr($user['name'], 0, 1)) ?>
