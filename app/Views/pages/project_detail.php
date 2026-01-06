@@ -1,3 +1,4 @@
+<?php helper('markdown'); ?>
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('content') ?>
@@ -52,8 +53,8 @@
                 <h1 class="text-3xl font-bold text-white mb-4"><?= esc($project['title']) ?></h1>
 
                 <!-- Description -->
-                <div class="prose prose-invert max-w-none">
-                    <p class="text-slate-300 leading-relaxed whitespace-pre-line"><?= esc($project['description']) ?></p>
+                <div class="prose prose-invert max-w-none markdown-content">
+                    <?= parse_markdown($project['description']) ?>
                 </div>
 
                 <!-- Action Buttons -->
