@@ -29,6 +29,10 @@ $routes->get('category/(:segment)', 'Categories::show/$1');
 // AI Tools
 $routes->get('tool/(:segment)', 'Tools::show/$1');
 
+// Tags
+$routes->get('tag/(:segment)', 'Tags::show/$1');
+$routes->get('api/tags/search', 'Tags::search');
+
 // Users
 $routes->get('user/(:num)', 'Users::profile/$1');
 $routes->get('user/(:num)/bookmarks', 'Users::bookmarks/$1');

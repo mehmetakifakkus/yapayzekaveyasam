@@ -96,6 +96,22 @@
             </div>
         </div>
 
+        <!-- Tags -->
+        <div>
+            <label for="tags" class="block text-sm font-medium text-slate-300 mb-2">
+                Etiketler <span class="text-slate-500">(Opsiyonel)</span>
+            </label>
+            <input
+                type="text"
+                name="tags"
+                id="tags"
+                value="<?= esc(old('tags', $project['tags_string'] ?? '')) ?>"
+                placeholder="react, typescript, dashboard (virgülle ayırın)"
+                class="input-field"
+            >
+            <p class="text-xs text-slate-500 mt-1">Projenizi tanımlayan etiketleri virgülle ayırarak yazın</p>
+        </div>
+
         <!-- Description -->
         <div>
             <label for="description" class="block text-sm font-medium text-slate-300 mb-2">

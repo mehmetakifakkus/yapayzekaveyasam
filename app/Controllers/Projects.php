@@ -7,6 +7,7 @@ use App\Models\CategoryModel;
 use App\Models\AiToolModel;
 use App\Models\LikeModel;
 use App\Models\CommentModel;
+use App\Models\TagModel;
 use App\Libraries\ScreenshotService;
 
 class Projects extends BaseController
@@ -16,6 +17,7 @@ class Projects extends BaseController
     protected AiToolModel $aiToolModel;
     protected LikeModel $likeModel;
     protected CommentModel $commentModel;
+    protected TagModel $tagModel;
 
     public function __construct()
     {
@@ -24,6 +26,7 @@ class Projects extends BaseController
         $this->aiToolModel = model('AiToolModel');
         $this->likeModel = model('LikeModel');
         $this->commentModel = model('CommentModel');
+        $this->tagModel = model('TagModel');
     }
 
     /**
@@ -80,6 +83,9 @@ class Projects extends BaseController
 
         // Get AI tools
         $project['ai_tools'] = $this->aiToolModel->getByProjectId($project['id']);
+
+        // Get tags
+        $project['tags'] = $this->tagModel->getByProjectId($project['id']);
 
         // Get likes
         $project['likes_count'] = $this->likeModel->getCountByProject($project['id']);
@@ -214,6 +220,13 @@ class Projects extends BaseController
             }
         }
 
+        // Add tags
+        $tagsInput = $this->request->getPost('tags');
+        if (!empty($tagsInput)) {
+            $tagNames = array_map('trim', explode(',', $tagsInput));
+            $this->tagModel->syncProjectTags($projectId, $tagNames);
+        }
+
         $message = $this->isAdmin()
             ? 'Projeniz başarıyla eklendi!'
             : 'Projeniz başarıyla eklendi! Admin onayından sonra yayınlanacaktır.';
@@ -242,6 +255,8 @@ class Projects extends BaseController
         $aiTools = $this->aiToolModel->findAll();
         $project['ai_tools'] = $this->aiToolModel->getByProjectId($project['id']);
         $project['ai_tool_ids'] = array_column($project['ai_tools'], 'id');
+        $project['tags'] = $this->tagModel->getByProjectId($project['id']);
+        $project['tags_string'] = implode(', ', array_column($project['tags'], 'name'));
 
         return view('pages/project_form', $this->getViewData([
             'title'      => 'Projeyi Düzenle - AI Showcase',
@@ -341,6 +356,11 @@ class Projects extends BaseController
                 ]);
             }
         }
+
+        // Update tags
+        $tagsInput = $this->request->getPost('tags');
+        $tagNames = !empty($tagsInput) ? array_map('trim', explode(',', $tagsInput)) : [];
+        $this->tagModel->syncProjectTags($project['id'], $tagNames);
 
         $newSlug = $data['slug'] ?? $slug;
         return redirect()->to('/projects/' . $newSlug)->with('success', 'Proje başarıyla güncellendi!');

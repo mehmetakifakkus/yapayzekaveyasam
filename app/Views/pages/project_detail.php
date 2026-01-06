@@ -49,6 +49,17 @@
                     <?php endforeach; ?>
                 </div>
 
+                <!-- Tags -->
+                <?php if (!empty($project['tags'])): ?>
+                <div class="flex flex-wrap items-center gap-2 mb-4">
+                    <?php foreach ($project['tags'] as $tag): ?>
+                        <a href="<?= base_url('tag/' . esc($tag['slug'])) ?>" class="tag-badge">
+                            #<?= esc($tag['name']) ?>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+
                 <!-- Title -->
                 <h1 class="text-3xl font-bold text-white mb-4"><?= esc($project['title']) ?></h1>
 

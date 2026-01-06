@@ -81,6 +81,13 @@ class ProjectModel extends Model
                 ->where('ai_tools.slug', $filters['ai_tool']);
         }
 
+        // Tag filter
+        if (!empty($filters['tag'])) {
+            $builder->join('project_tags', 'project_tags.project_id = projects.id')
+                ->join('tags', 'tags.id = project_tags.tag_id')
+                ->where('tags.slug', $filters['tag']);
+        }
+
         // Search filter
         if (!empty($filters['search'])) {
             $builder->groupStart()
@@ -184,6 +191,12 @@ class ProjectModel extends Model
             $builder->join('project_ai_tools', 'project_ai_tools.project_id = projects.id')
                 ->join('ai_tools', 'ai_tools.id = project_ai_tools.ai_tool_id')
                 ->where('ai_tools.slug', $filters['ai_tool']);
+        }
+
+        if (!empty($filters['tag'])) {
+            $builder->join('project_tags', 'project_tags.project_id = projects.id')
+                ->join('tags', 'tags.id = project_tags.tag_id')
+                ->where('tags.slug', $filters['tag']);
         }
 
         if (!empty($filters['search'])) {
