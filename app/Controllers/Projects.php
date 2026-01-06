@@ -105,11 +105,26 @@ class Projects extends BaseController
         $relatedProjects = array_slice($relatedProjects, 0, 3);
         $this->enrichProjects($relatedProjects);
 
+        // Prepare OpenGraph data
+        $ogImage = !empty($project['screenshot'])
+            ? base_url($project['screenshot'])
+            : base_url('assets/images/og-default.png');
+
+        $ogDescription = mb_substr(strip_tags($project['description']), 0, 200);
+        if (mb_strlen($project['description']) > 200) {
+            $ogDescription .= '...';
+        }
+
         return view('pages/project_detail', $this->getViewData([
             'title'           => $project['title'] . ' - AI Showcase',
             'project'         => $project,
             'comments'        => $comments,
             'relatedProjects' => $relatedProjects,
+            'ogTitle'         => $project['title'],
+            'ogDescription'   => $ogDescription,
+            'ogImage'         => $ogImage,
+            'ogType'          => 'article',
+            'ogUrl'           => current_url(),
         ]));
     }
 

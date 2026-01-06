@@ -10,6 +10,9 @@
             <p class="text-slate-400 mt-1">Genel istatistikler ve hızlı işlemler</p>
         </div>
         <div class="flex gap-3">
+            <a href="<?= base_url('admin/analytics') ?>" class="btn-primary">
+                Analytics
+            </a>
             <a href="<?= base_url('admin/projects') ?>" class="btn-secondary">
                 Projeler
             </a>

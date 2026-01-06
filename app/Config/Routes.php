@@ -9,6 +9,10 @@ use CodeIgniter\Router\RouteCollection;
 // Home
 $routes->get('/', 'Home::index');
 
+// SEO
+$routes->get('sitemap.xml', 'Sitemap::index');
+$routes->get('robots.txt', 'Sitemap::robots');
+
 // Auth
 $routes->get('auth/google', 'Auth::google');
 $routes->get('auth/callback', 'Auth::callback');
@@ -68,6 +72,7 @@ $routes->group('api', function($routes) {
 // Admin
 $routes->group('admin', function($routes) {
     $routes->get('/', 'Admin::index');
+    $routes->get('analytics', 'Admin::analytics');
     $routes->get('projects', 'Admin::projects');
     $routes->post('projects/(:num)/approve', 'Admin::approveProject/$1');
     $routes->post('projects/(:num)/reject', 'Admin::rejectProject/$1');

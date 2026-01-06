@@ -357,6 +357,130 @@ class Admin extends BaseController
     }
 
     /**
+     * Analytics page with charts
+     */
+    public function analytics()
+    {
+        $this->requireAdmin();
+
+        $db = \Config\Database::connect();
+
+        // Get data for the past 30 days
+        $days = 30;
+        $startDate = date('Y-m-d', strtotime("-{$days} days"));
+
+        // Daily registrations
+        $dailyUsers = $db->query("
+            SELECT DATE(created_at) as date, COUNT(*) as count
+            FROM users
+            WHERE created_at >= ?
+            GROUP BY DATE(created_at)
+            ORDER BY date
+        ", [$startDate])->getResultArray();
+
+        // Daily projects
+        $dailyProjects = $db->query("
+            SELECT DATE(created_at) as date, COUNT(*) as count
+            FROM projects
+            WHERE created_at >= ?
+            GROUP BY DATE(created_at)
+            ORDER BY date
+        ", [$startDate])->getResultArray();
+
+        // Daily likes
+        $dailyLikes = $db->query("
+            SELECT DATE(created_at) as date, COUNT(*) as count
+            FROM likes
+            WHERE created_at >= ?
+            GROUP BY DATE(created_at)
+            ORDER BY date
+        ", [$startDate])->getResultArray();
+
+        // Daily comments
+        $dailyComments = $db->query("
+            SELECT DATE(created_at) as date, COUNT(*) as count
+            FROM comments
+            WHERE created_at >= ?
+            GROUP BY DATE(created_at)
+            ORDER BY date
+        ", [$startDate])->getResultArray();
+
+        // Projects by category
+        $projectsByCategory = $db->query("
+            SELECT c.name, COUNT(p.id) as count
+            FROM categories c
+            LEFT JOIN projects p ON p.category_id = c.id AND p.status = 'approved'
+            GROUP BY c.id, c.name
+            ORDER BY count DESC
+        ")->getResultArray();
+
+        // Projects by AI tool
+        $projectsByTool = $db->query("
+            SELECT t.name, COUNT(pt.project_id) as count
+            FROM ai_tools t
+            LEFT JOIN project_ai_tools pt ON pt.ai_tool_id = t.id
+            LEFT JOIN projects p ON p.id = pt.project_id AND p.status = 'approved'
+            GROUP BY t.id, t.name
+            ORDER BY count DESC
+        ")->getResultArray();
+
+        // Top users by projects
+        $topUsersByProjects = $db->query("
+            SELECT u.id, u.name, u.avatar, COUNT(p.id) as projects_count
+            FROM users u
+            INNER JOIN projects p ON p.user_id = u.id AND p.status = 'approved'
+            GROUP BY u.id, u.name, u.avatar
+            ORDER BY projects_count DESC
+            LIMIT 10
+        ")->getResultArray();
+
+        // Top users by likes received
+        $topUsersByLikes = $db->query("
+            SELECT u.id, u.name, u.avatar, COUNT(l.id) as likes_count
+            FROM users u
+            INNER JOIN projects p ON p.user_id = u.id AND p.status = 'approved'
+            INNER JOIN likes l ON l.project_id = p.id
+            GROUP BY u.id, u.name, u.avatar
+            ORDER BY likes_count DESC
+            LIMIT 10
+        ")->getResultArray();
+
+        // Top projects by likes
+        $topProjects = $db->query("
+            SELECT p.id, p.title, p.slug, p.screenshot, u.name as user_name, COUNT(l.id) as likes_count
+            FROM projects p
+            INNER JOIN users u ON u.id = p.user_id
+            LEFT JOIN likes l ON l.project_id = p.id
+            WHERE p.status = 'approved'
+            GROUP BY p.id, p.title, p.slug, p.screenshot, u.name
+            ORDER BY likes_count DESC
+            LIMIT 10
+        ")->getResultArray();
+
+        // Project status distribution
+        $projectStatuses = [
+            'approved' => $this->projectModel->where('status', 'approved')->countAllResults(),
+            'pending' => $this->projectModel->where('status', 'pending')->countAllResults(),
+            'rejected' => $this->projectModel->where('status', 'rejected')->countAllResults(),
+        ];
+
+        return view('admin/analytics', $this->getViewData([
+            'title' => 'Analytics - Admin',
+            'dailyUsers' => $dailyUsers,
+            'dailyProjects' => $dailyProjects,
+            'dailyLikes' => $dailyLikes,
+            'dailyComments' => $dailyComments,
+            'projectsByCategory' => $projectsByCategory,
+            'projectsByTool' => $projectsByTool,
+            'topUsersByProjects' => $topUsersByProjects,
+            'topUsersByLikes' => $topUsersByLikes,
+            'topProjects' => $topProjects,
+            'projectStatuses' => $projectStatuses,
+            'days' => $days,
+        ]));
+    }
+
+    /**
      * Refresh project screenshot
      */
     public function refreshScreenshot(int $id)

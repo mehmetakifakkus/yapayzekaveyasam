@@ -13,7 +13,30 @@ if (!empty($currentUser['theme'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($title ?? 'AI Showcase') ?></title>
-    <meta name="description" content="Yapay zeka araçlarıyla oluşturulmuş web projelerini keşfedin ve paylaşın.">
+    <?php
+    $metaDescription = $ogDescription ?? 'Yapay zeka araçlarıyla oluşturulmuş web projelerini keşfedin ve paylaşın.';
+    $metaTitle = $ogTitle ?? $title ?? 'AI Showcase';
+    $metaImage = $ogImage ?? 'https://placehold.co/1200x630/1e1b4b/a78bfa?text=AI+Showcase';
+    $metaUrl = $ogUrl ?? current_url();
+    $metaType = $ogType ?? 'website';
+    ?>
+    <meta name="description" content="<?= esc($metaDescription) ?>">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="<?= esc($metaType) ?>">
+    <meta property="og:url" content="<?= esc($metaUrl) ?>">
+    <meta property="og:title" content="<?= esc($metaTitle) ?>">
+    <meta property="og:description" content="<?= esc($metaDescription) ?>">
+    <meta property="og:image" content="<?= esc($metaImage) ?>">
+    <meta property="og:site_name" content="AI Showcase">
+    <meta property="og:locale" content="tr_TR">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="<?= esc($metaUrl) ?>">
+    <meta name="twitter:title" content="<?= esc($metaTitle) ?>">
+    <meta name="twitter:description" content="<?= esc($metaDescription) ?>">
+    <meta name="twitter:image" content="<?= esc($metaImage) ?>">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
