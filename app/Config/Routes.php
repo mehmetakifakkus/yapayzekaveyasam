@@ -37,6 +37,7 @@ $routes->get('api/tags/search', 'Tags::search');
 $routes->get('user/(:num)', 'Users::profile/$1');
 $routes->get('user/(:num)/bookmarks', 'Users::bookmarks/$1');
 $routes->post('user/update-bio', 'Users::updateBio');
+$routes->post('user/update-theme', 'Users::updateTheme');
 
 // Notifications
 $routes->get('notifications', 'Notifications::index');

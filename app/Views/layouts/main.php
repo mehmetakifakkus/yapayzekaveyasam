@@ -1,5 +1,14 @@
 <!DOCTYPE html>
-<html lang="tr" data-theme="<?= getenv('APP_THEME') ?: 'default' ?>">
+<?php
+// User theme takes priority, then admin theme, then default
+$theme = 'default';
+if (!empty($currentUser['theme'])) {
+    $theme = $currentUser['theme'];
+} elseif (getenv('APP_THEME')) {
+    $theme = getenv('APP_THEME');
+}
+?>
+<html lang="tr" data-theme="<?= esc($theme) ?>" id="html-root">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

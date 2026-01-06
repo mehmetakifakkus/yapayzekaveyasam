@@ -18,6 +18,7 @@ class UserModel extends Model
         'email',
         'avatar',
         'bio',
+        'theme',
     ];
 
     protected bool $allowEmptyInserts = false;

@@ -117,6 +117,38 @@ class Users extends BaseController
     }
 
     /**
+     * Update user theme
+     */
+    public function updateTheme()
+    {
+        if (!$this->isLoggedIn()) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Giriş yapmalısınız.',
+            ]);
+        }
+
+        $theme = $this->request->getPost('theme') ?? 'default';
+
+        $validThemes = ['default', 'emerald', 'amber', 'ocean', 'mono', 'light-white', 'light-cream', 'light-gray'];
+
+        if (!in_array($theme, $validThemes)) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Geçersiz tema.',
+            ]);
+        }
+
+        $this->userModel->update($this->currentUser['id'], ['theme' => $theme]);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Tema güncellendi!',
+            'theme'   => $theme,
+        ]);
+    }
+
+    /**
      * Show user's bookmarked projects
      */
     public function bookmarks(int $id)

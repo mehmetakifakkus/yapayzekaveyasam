@@ -131,6 +131,23 @@
                                 Proje Ekle
                             </a>
 
+                            <!-- Theme Selector -->
+                            <div class="px-3 py-2">
+                                <label class="text-xs text-slate-500 mb-2 block">Tema</label>
+                                <select onchange="changeTheme(this.value)" class="w-full text-sm bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-300 focus:outline-none focus:border-purple-500">
+                                    <option value="default" <?= ($currentUser['theme'] ?? 'default') === 'default' ? 'selected' : '' ?>>Varsayılan</option>
+                                    <option value="emerald" <?= ($currentUser['theme'] ?? '') === 'emerald' ? 'selected' : '' ?>>Zümrüt</option>
+                                    <option value="amber" <?= ($currentUser['theme'] ?? '') === 'amber' ? 'selected' : '' ?>>Amber</option>
+                                    <option value="ocean" <?= ($currentUser['theme'] ?? '') === 'ocean' ? 'selected' : '' ?>>Okyanus</option>
+                                    <option value="mono" <?= ($currentUser['theme'] ?? '') === 'mono' ? 'selected' : '' ?>>Mono</option>
+                                    <option value="light-white" <?= ($currentUser['theme'] ?? '') === 'light-white' ? 'selected' : '' ?>>Açık Beyaz</option>
+                                    <option value="light-cream" <?= ($currentUser['theme'] ?? '') === 'light-cream' ? 'selected' : '' ?>>Açık Krem</option>
+                                    <option value="light-gray" <?= ($currentUser['theme'] ?? '') === 'light-gray' ? 'selected' : '' ?>>Açık Gri</option>
+                                </select>
+                            </div>
+
+                            <hr class="border-slate-700 my-2">
+
                             <?php if (!empty($isAdmin)): ?>
                             <a href="<?= base_url('admin') ?>" class="flex items-center gap-2 px-3 py-2 text-sm text-purple-400 hover:text-purple-300 hover:bg-slate-700/50 rounded-lg transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -322,5 +339,35 @@ document.addEventListener('click', function(e) {
 
 // Update badge on page load
 document.addEventListener('DOMContentLoaded', updateNotificationBadge);
+
+// Theme change function
+function changeTheme(theme) {
+    // Instantly update the theme for preview
+    document.getElementById('html-root').setAttribute('data-theme', theme);
+
+    // Save to server
+    fetch('<?= base_url('user/update-theme') ?>', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: 'theme=' + encodeURIComponent(theme)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+        } else {
+            showToast(data.message || 'Tema değiştirilemedi', 'error');
+            // Revert theme on error
+            location.reload();
+        }
+    })
+    .catch(err => {
+        showToast('Tema değiştirilemedi', 'error');
+        location.reload();
+    });
+}
 </script>
 <?php endif; ?>
