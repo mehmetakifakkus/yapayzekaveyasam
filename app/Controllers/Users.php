@@ -8,6 +8,7 @@ use App\Models\LikeModel;
 use App\Models\AiToolModel;
 use App\Models\FollowModel;
 use App\Models\BookmarkModel;
+use App\Models\UserBadgeModel;
 
 class Users extends BaseController
 {
@@ -17,6 +18,7 @@ class Users extends BaseController
     protected AiToolModel $aiToolModel;
     protected FollowModel $followModel;
     protected BookmarkModel $bookmarkModel;
+    protected UserBadgeModel $userBadgeModel;
 
     public function __construct()
     {
@@ -26,6 +28,7 @@ class Users extends BaseController
         $this->aiToolModel = model('AiToolModel');
         $this->followModel = model('FollowModel');
         $this->bookmarkModel = model('BookmarkModel');
+        $this->userBadgeModel = model('UserBadgeModel');
     }
 
     /**
@@ -71,6 +74,9 @@ class Users extends BaseController
         // Check if this is the current user's profile
         $isOwnProfile = $this->isLoggedIn() && $this->currentUser['id'] === $id;
 
+        // Get user badges
+        $badges = $this->userBadgeModel->getUserBadges($id);
+
         return view('pages/profile', $this->getViewData([
             'title'          => $user['name'] . ' - AI Showcase',
             'user'           => $user,
@@ -81,6 +87,7 @@ class Users extends BaseController
             'followingCount' => $followingCount,
             'isFollowing'    => $isFollowing,
             'isOwnProfile'   => $isOwnProfile,
+            'badges'         => $badges,
         ]));
     }
 
@@ -145,6 +152,29 @@ class Users extends BaseController
             'success' => true,
             'message' => 'Tema güncellendi!',
             'theme'   => $theme,
+        ]);
+    }
+
+    /**
+     * Update email digest preference
+     */
+    public function updateDigest()
+    {
+        if (!$this->isLoggedIn()) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Giriş yapmalısınız.',
+            ]);
+        }
+
+        $enabled = $this->request->getPost('enabled') === '1' || $this->request->getPost('enabled') === 'true';
+
+        $this->userModel->update($this->currentUser['id'], ['email_digest' => $enabled ? 1 : 0]);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => $enabled ? 'Haftalık özet açıldı!' : 'Haftalık özet kapatıldı!',
+            'enabled' => $enabled,
         ]);
     }
 

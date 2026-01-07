@@ -10,6 +10,7 @@ use App\Models\LikeModel;
 use App\Models\CommentModel;
 use App\Models\NotificationModel;
 use App\Libraries\ScreenshotService;
+use App\Libraries\BadgeChecker;
 
 class Admin extends BaseController
 {
@@ -137,10 +138,14 @@ class Admin extends BaseController
         $notificationModel = model('NotificationModel');
         $notificationModel->createNotification(
             $project['user_id'],
+            'project_approved',
             null, // No actor for system notification
-            'approve',
             $id
         );
+
+        // Check for project badges for the project owner
+        $badgeChecker = new BadgeChecker();
+        $badgeChecker->checkProjectBadges((int) $project['user_id']);
 
         if ($this->request->isAJAX()) {
             return $this->response->setJSON(['success' => true, 'message' => 'Proje onaylandı.']);

@@ -8,6 +8,7 @@ use App\Models\CommentModel;
 use App\Models\BookmarkModel;
 use App\Models\FollowModel;
 use App\Models\NotificationModel;
+use App\Libraries\BadgeChecker;
 use CodeIgniter\API\ResponseTrait;
 
 class Api extends BaseController
@@ -66,10 +67,14 @@ class Api extends BaseController
         if ($result['action'] === 'liked' && $project['user_id'] != $this->currentUser['id']) {
             $this->notificationModel->createNotification(
                 $project['user_id'],
-                $this->currentUser['id'],
                 'like',
+                $this->currentUser['id'],
                 $projectId
             );
+
+            // Check for like badges for project owner
+            $badgeChecker = new BadgeChecker();
+            $badgeChecker->checkLikeBadges((int) $project['user_id']);
         }
 
         return $this->respond([
@@ -156,8 +161,8 @@ class Api extends BaseController
         if ($project['user_id'] != $this->currentUser['id']) {
             $this->notificationModel->createNotification(
                 $project['user_id'],
-                $this->currentUser['id'],
                 'comment',
+                $this->currentUser['id'],
                 (int) $projectId
             );
         }
@@ -322,10 +327,14 @@ class Api extends BaseController
         if ($result['action'] === 'followed') {
             $this->notificationModel->createNotification(
                 $userId,
-                $this->currentUser['id'],
                 'follow',
+                $this->currentUser['id'],
                 null
             );
+
+            // Check for follower badges for the followed user
+            $badgeChecker = new BadgeChecker();
+            $badgeChecker->checkFollowerBadges($userId);
         }
 
         return $this->respond([

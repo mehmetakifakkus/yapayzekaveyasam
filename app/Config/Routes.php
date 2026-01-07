@@ -42,6 +42,7 @@ $routes->get('user/(:num)', 'Users::profile/$1');
 $routes->get('user/(:num)/bookmarks', 'Users::bookmarks/$1');
 $routes->post('user/update-bio', 'Users::updateBio');
 $routes->post('user/update-theme', 'Users::updateTheme');
+$routes->post('user/update-digest', 'Users::updateDigest');
 
 // Notifications
 $routes->get('notifications', 'Notifications::index');

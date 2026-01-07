@@ -47,6 +47,18 @@
                     <p class="text-slate-400 mb-4"><?= esc($user['bio']) ?></p>
                 <?php endif; ?>
 
+                <!-- Badges -->
+                <?php if (!empty($badges)): ?>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <?php foreach ($badges as $badge): ?>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-sm" title="<?= esc($badge['description']) ?>">
+                            <span><?= $badge['icon'] ?></span>
+                            <span class="text-purple-200"><?= esc($badge['name']) ?></span>
+                        </span>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+
                 <!-- Stats -->
                 <div class="flex items-center justify-center sm:justify-start gap-6">
                     <div class="text-center sm:text-left">
@@ -71,6 +83,19 @@
                 <div class="text-sm text-slate-500 mt-4">
                     Üye: <?= date('M Y', strtotime($user['created_at'])) ?>
                 </div>
+
+                <!-- Email Digest Toggle (only for own profile) -->
+                <?php if ($isOwnProfile): ?>
+                <div class="mt-4 pt-4 border-t border-slate-700">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <div class="relative">
+                            <input type="checkbox" id="digest-toggle" class="sr-only peer" <?= !empty($user['email_digest']) ? 'checked' : '' ?>>
+                            <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                        </div>
+                        <span class="text-sm text-slate-400">Haftalık özet e-postası al</span>
+                    </label>
+                </div>
+                <?php endif; ?>
             </div>
 
             <!-- Actions -->
@@ -284,6 +309,33 @@ async function saveBio() {
     } catch (error) {
         console.error('Error:', error);
     }
+}
+
+// Email digest toggle
+const digestToggle = document.getElementById('digest-toggle');
+if (digestToggle) {
+    digestToggle.addEventListener('change', async function() {
+        try {
+            const formData = new FormData();
+            formData.append('enabled', this.checked ? '1' : '0');
+
+            const response = await fetch('<?= base_url('user/update-digest') ?>', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success && window.showToast) {
+                showToast(data.message, 'success');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
 }
 </script>
 <?= $this->endSection() ?>
