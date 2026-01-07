@@ -371,4 +371,22 @@ class ProjectModel extends Model
 
         return $grouped;
     }
+
+    /**
+     * Get top projects by likes received in a specific period
+     */
+    public function getTopProjectsByLikesInPeriod(int $days = 7, int $limit = 6): array
+    {
+        $startDate = date('Y-m-d H:i:s', strtotime("-{$days} days"));
+
+        return $this->select('projects.*, users.name as user_name, users.avatar as user_avatar, categories.name as category_name')
+            ->select('(SELECT COUNT(*) FROM likes WHERE likes.project_id = projects.id AND likes.created_at >= "' . $startDate . '") as week_likes', false)
+            ->join('users', 'users.id = projects.user_id')
+            ->join('categories', 'categories.id = projects.category_id')
+            ->where('projects.status', 'approved')
+            ->orderBy('week_likes', 'DESC')
+            ->orderBy('projects.views', 'DESC') // Secondary sort by views
+            ->limit($limit)
+            ->findAll();
+    }
 }

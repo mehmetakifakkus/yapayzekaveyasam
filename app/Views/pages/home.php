@@ -81,6 +81,42 @@
     </div>
 </section>
 
+<!-- Weekly Highlights -->
+<?php if (!empty($weeklyHighlights)): ?>
+<section class="py-16 border-t border-slate-800 bg-gradient-to-b from-yellow-500/5 to-transparent">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Bu Haftanın Yıldızları</h2>
+                    <p class="text-sm text-slate-400">
+                        <?= date('d M', strtotime($weekStart)) ?> - <?= date('d M Y', strtotime($weekEnd)) ?>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <?php foreach ($weeklyHighlights as $index => $project): ?>
+                <div class="relative">
+                    <?php if ($index < 3): ?>
+                    <div class="absolute -top-2 -left-2 z-10 w-8 h-8 rounded-full bg-gradient-to-br <?= $index === 0 ? 'from-yellow-400 to-yellow-600' : ($index === 1 ? 'from-slate-300 to-slate-400' : 'from-amber-600 to-amber-700') ?> flex items-center justify-center shadow-lg">
+                        <span class="text-white font-bold text-sm"><?= $index + 1 ?></span>
+                    </div>
+                    <?php endif; ?>
+                    <?= view('components/project_card', ['project' => $project]) ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
 <!-- Trending Projects -->
 <?php if (!empty($trendingProjects)): ?>
 <section class="py-16 border-t border-slate-800">
