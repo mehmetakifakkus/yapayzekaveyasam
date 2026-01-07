@@ -37,18 +37,24 @@ class TagModel extends Model
     /**
      * Find or create tag by name
      */
-    public function findOrCreate(string $name): array
+    public function findOrCreate(string $name): ?array
     {
         $slug = url_title($name, '-', true);
+
+        if (empty($slug)) {
+            return null;
+        }
 
         $tag = $this->where('slug', $slug)->first();
 
         if (!$tag) {
-            $this->insert([
-                'name' => $name,
-                'slug' => $slug,
-            ]);
-            $tag = $this->find($this->getInsertID());
+            $db = \Config\Database::connect();
+            $db->query(
+                "INSERT INTO tags (name, slug, created_at) VALUES (?, ?, ?)",
+                [$name, $slug, date('Y-m-d H:i:s')]
+            );
+            $insertId = $db->insertID();
+            $tag = $this->find($insertId);
         }
 
         return $tag;
@@ -102,18 +108,25 @@ class TagModel extends Model
         // Remove existing tags
         $db->table('project_tags')->where('project_id', $projectId)->delete();
 
-        // Add new tags
-        foreach ($tagNames as $tagName) {
+        // Filter and clean tag names
+        $cleanedTags = [];
+        foreach ($tagNames as $key => $tagName) {
             if (!is_string($tagName)) continue;
             $tagName = trim($tagName);
-            if (empty($tagName)) continue;
+            if (empty($tagName) || strlen($tagName) > 50) continue;
+            $cleanedTags[] = $tagName;
+        }
 
+        // Add new tags
+        foreach ($cleanedTags as $tagName) {
             $tag = $this->findOrCreate($tagName);
 
-            $db->table('project_tags')->insert([
-                'project_id' => (int) $projectId,
-                'tag_id'     => (int) $tag['id'],
-            ]);
+            if ($tag && isset($tag['id'])) {
+                $db->query(
+                    "INSERT INTO project_tags (project_id, tag_id) VALUES (?, ?)",
+                    [$projectId, (int) $tag['id']]
+                );
+            }
         }
     }
 
