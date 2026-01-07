@@ -223,11 +223,14 @@ class Projects extends BaseController
             return redirect()->back()->withInput()->with('error', 'Proje eklenirken bir hata oluştu.');
         }
 
+        $projectId = (int) $projectId;
+
         // Add AI tools
         $aiToolIds = $this->request->getPost('ai_tools');
         if (is_array($aiToolIds)) {
             $db = \Config\Database::connect();
             foreach ($aiToolIds as $toolId) {
+                if (!is_numeric($toolId)) continue;
                 $db->table('project_ai_tools')->insert([
                     'project_id' => $projectId,
                     'ai_tool_id' => (int) $toolId,
@@ -360,13 +363,15 @@ class Projects extends BaseController
 
         // Update AI tools
         $db = \Config\Database::connect();
-        $db->table('project_ai_tools')->where('project_id', $project['id'])->delete();
+        $projectId = (int) $project['id'];
+        $db->table('project_ai_tools')->where('project_id', $projectId)->delete();
 
         $aiToolIds = $this->request->getPost('ai_tools');
         if (is_array($aiToolIds)) {
             foreach ($aiToolIds as $toolId) {
+                if (!is_numeric($toolId)) continue;
                 $db->table('project_ai_tools')->insert([
-                    'project_id' => $project['id'],
+                    'project_id' => $projectId,
                     'ai_tool_id' => (int) $toolId,
                 ]);
             }

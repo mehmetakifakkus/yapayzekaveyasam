@@ -351,6 +351,9 @@ class ProjectModel extends Model
             return [];
         }
 
+        // Ensure all IDs are integers
+        $projectIds = array_map('intval', $projectIds);
+
         $tools = $this->db->table('project_ai_tools')
             ->select('project_ai_tools.project_id, ai_tools.id, ai_tools.name, ai_tools.slug, ai_tools.icon')
             ->join('ai_tools', 'ai_tools.id = project_ai_tools.ai_tool_id')

@@ -104,14 +104,15 @@ class TagModel extends Model
 
         // Add new tags
         foreach ($tagNames as $tagName) {
+            if (!is_string($tagName)) continue;
             $tagName = trim($tagName);
             if (empty($tagName)) continue;
 
             $tag = $this->findOrCreate($tagName);
 
             $db->table('project_tags')->insert([
-                'project_id' => $projectId,
-                'tag_id' => $tag['id'],
+                'project_id' => (int) $projectId,
+                'tag_id'     => (int) $tag['id'],
             ]);
         }
     }

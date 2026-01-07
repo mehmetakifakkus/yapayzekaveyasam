@@ -110,6 +110,7 @@ class FollowModel extends Model
             ->where('follower_id', $userId)
             ->findAll();
 
-        return array_column($results, 'following_id');
+        // Return as array of integers (cast to ensure proper type)
+        return array_map('intval', array_column($results, 'following_id'));
     }
 }
