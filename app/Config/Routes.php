@@ -54,6 +54,7 @@ $routes->get('feed', 'Users::feed');
 // API endpoints
 $routes->group('api', function($routes) {
     $routes->post('like/(:num)', 'Api::like/$1');
+    $routes->post('like/comment/(:num)', 'Api::likeComment/$1');
     $routes->post('comment', 'Api::comment');
     $routes->delete('comment/(:num)', 'Api::deleteComment/$1');
     $routes->get('projects', 'Api::projects');
@@ -63,6 +64,9 @@ $routes->group('api', function($routes) {
 
     // Follow
     $routes->post('follow/(:num)', 'Api::follow/$1');
+
+    // Users
+    $routes->get('users/search', 'Api::searchUsers');
 
     // Notifications
     $routes->get('notifications', 'Notifications::getRecent');

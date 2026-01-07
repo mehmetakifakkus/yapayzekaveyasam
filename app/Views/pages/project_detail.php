@@ -160,16 +160,21 @@
                 <?php if ($isLoggedIn): ?>
                 <form id="comment-form" class="mb-6">
                     <input type="hidden" name="project_id" value="<?= $project['id'] ?>">
-                    <textarea
-                        name="content"
-                        id="comment-content"
-                        rows="3"
-                        placeholder="Yorum yazın..."
-                        class="textarea-field mb-3"
-                        maxlength="1000"
-                    ></textarea>
+                    <div class="relative">
+                        <textarea
+                            name="content"
+                            id="comment-content"
+                            rows="3"
+                            placeholder="Yorum yazın... (@kullanıcı ile etiketleyebilirsiniz)"
+                            class="textarea-field mb-3"
+                            maxlength="1000"
+                        ></textarea>
+                        <!-- Mention Autocomplete Dropdown -->
+                        <div id="mention-dropdown" class="hidden absolute left-0 right-0 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto">
+                        </div>
+                    </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-xs text-slate-500"><span id="char-count">0</span>/1000</span>
+                        <span class="text-xs text-slate-500"><span id="char-count">0</span>/1000 | <span class="text-purple-400">@</span> ile kullanıcı etiketle</span>
                         <button type="submit" class="btn-primary text-sm py-2">
                             Yorum Yap
                         </button>
@@ -196,6 +201,8 @@
                         <?php
                         function renderComment($comment, $isLoggedIn, $depth = 0) {
                             $marginClass = $depth > 0 ? 'ml-8 mt-3 pl-4 border-l-2 border-slate-700' : '';
+                            $likesCount = $comment['likes_count'] ?? 0;
+                            $isLiked = $comment['is_liked'] ?? false;
                         ?>
                         <div class="comment-box <?= $marginClass ?>" data-comment-id="<?= $comment['id'] ?>">
                             <div class="flex items-start gap-3">
@@ -211,14 +218,25 @@
                                         <span class="font-medium text-white text-sm"><?= esc($comment['user_name']) ?></span>
                                         <span class="text-xs text-slate-500"><?= date('d M Y, H:i', strtotime($comment['created_at'])) ?></span>
                                     </div>
-                                    <p class="text-slate-300 text-sm"><?= nl2br(esc($comment['content'])) ?></p>
+                                    <p class="text-slate-300 text-sm comment-content"><?= preg_replace('/@([^\s@]+)/', '<span class="text-purple-400 font-medium">@$1</span>', nl2br(esc($comment['content']))) ?></p>
+                                    <div class="flex items-center gap-4 mt-2">
+                                        <!-- Comment Like Button -->
+                                        <button onclick="toggleCommentLike(<?= $comment['id'] ?>)" class="comment-like-btn text-xs flex items-center gap-1 <?= $isLiked ? 'text-pink-400' : 'text-slate-500 hover:text-pink-400' ?> transition-colors" data-liked="<?= $isLiked ? 'true' : 'false' ?>">
+                                            <svg class="w-3.5 h-3.5" fill="<?= $isLiked ? 'currentColor' : 'none' ?>" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                            </svg>
+                                            <span class="comment-like-count"><?= $likesCount > 0 ? $likesCount : '' ?></span>
+                                        </button>
+                                        <?php if ($isLoggedIn && $depth < 2): ?>
+                                        <button onclick="showReplyForm(<?= $comment['id'] ?>)" class="text-xs text-slate-500 hover:text-purple-400 flex items-center gap-1 transition-colors">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                                            </svg>
+                                            Yanıtla
+                                        </button>
+                                        <?php endif; ?>
+                                    </div>
                                     <?php if ($isLoggedIn && $depth < 2): ?>
-                                    <button onclick="showReplyForm(<?= $comment['id'] ?>)" class="text-xs text-purple-400 hover:text-purple-300 mt-2 flex items-center gap-1">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
-                                        </svg>
-                                        Yanıtla
-                                    </button>
                                     <div id="reply-form-<?= $comment['id'] ?>" class="hidden mt-3">
                                         <textarea class="textarea-field text-sm mb-2" rows="2" placeholder="Yanıtınızı yazın..." maxlength="1000"></textarea>
                                         <div class="flex gap-2">
@@ -357,6 +375,11 @@
 const projectId = <?= $project['id'] ?>;
 const isLoggedIn = <?= $isLoggedIn ? 'true' : 'false' ?>;
 
+// Render @mentions in text
+function renderMentions(text) {
+    return text.replace(/@([^\s@<]+)/g, '<span class="text-purple-400 font-medium">@$1</span>');
+}
+
 // Like toggle
 async function toggleLike(id) {
     if (!isLoggedIn) {
@@ -394,15 +417,174 @@ async function toggleLike(id) {
     }
 }
 
+// Comment like toggle
+async function toggleCommentLike(commentId) {
+    if (!isLoggedIn) {
+        window.location.href = '<?= base_url('auth/google') ?>';
+        return;
+    }
+
+    try {
+        const response = await fetch(`<?= base_url('api/like/comment') ?>/${commentId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            const commentBox = document.querySelector(`[data-comment-id="${commentId}"]`);
+            const btn = commentBox.querySelector('.comment-like-btn');
+            const countSpan = btn.querySelector('.comment-like-count');
+            const svg = btn.querySelector('svg');
+
+            if (data.action === 'liked') {
+                btn.classList.remove('text-slate-500');
+                btn.classList.add('text-pink-400');
+                btn.dataset.liked = 'true';
+                svg.setAttribute('fill', 'currentColor');
+            } else {
+                btn.classList.add('text-slate-500');
+                btn.classList.remove('text-pink-400');
+                btn.dataset.liked = 'false';
+                svg.setAttribute('fill', 'none');
+            }
+
+            countSpan.textContent = data.count > 0 ? data.count : '';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
 // Comment form
 const commentForm = document.getElementById('comment-form');
 const commentContent = document.getElementById('comment-content');
 const charCount = document.getElementById('char-count');
 
+// Mention autocomplete
+const mentionDropdown = document.getElementById('mention-dropdown');
+let mentionSearchTimeout = null;
+let currentMentionStart = -1;
+
 if (commentContent) {
-    commentContent.addEventListener('input', () => {
+    commentContent.addEventListener('input', (e) => {
         charCount.textContent = commentContent.value.length;
+
+        // Check for @ mention
+        const cursorPos = commentContent.selectionStart;
+        const text = commentContent.value;
+
+        // Find the @ before cursor
+        let atPos = -1;
+        for (let i = cursorPos - 1; i >= 0; i--) {
+            if (text[i] === '@') {
+                atPos = i;
+                break;
+            } else if (text[i] === ' ' || text[i] === '\n') {
+                break;
+            }
+        }
+
+        if (atPos >= 0) {
+            const query = text.substring(atPos + 1, cursorPos);
+            currentMentionStart = atPos;
+
+            if (query.length >= 2) {
+                clearTimeout(mentionSearchTimeout);
+                mentionSearchTimeout = setTimeout(() => searchMentions(query), 300);
+            } else {
+                hideMentionDropdown();
+            }
+        } else {
+            hideMentionDropdown();
+        }
     });
+
+    commentContent.addEventListener('keydown', (e) => {
+        if (!mentionDropdown.classList.contains('hidden')) {
+            const items = mentionDropdown.querySelectorAll('.mention-item');
+            const activeItem = mentionDropdown.querySelector('.mention-item.bg-slate-700');
+            let activeIndex = Array.from(items).indexOf(activeItem);
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (activeIndex < items.length - 1) {
+                    items[activeIndex]?.classList.remove('bg-slate-700');
+                    items[activeIndex + 1]?.classList.add('bg-slate-700');
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (activeIndex > 0) {
+                    items[activeIndex]?.classList.remove('bg-slate-700');
+                    items[activeIndex - 1]?.classList.add('bg-slate-700');
+                }
+            } else if (e.key === 'Enter' && activeItem) {
+                e.preventDefault();
+                selectMention(activeItem.dataset.name);
+            } else if (e.key === 'Escape') {
+                hideMentionDropdown();
+            }
+        }
+    });
+
+    commentContent.addEventListener('blur', () => {
+        setTimeout(hideMentionDropdown, 200);
+    });
+}
+
+async function searchMentions(query) {
+    try {
+        const response = await fetch(`<?= base_url('api/users/search') ?>?q=${encodeURIComponent(query)}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await response.json();
+
+        if (data.success && data.users.length > 0) {
+            showMentionDropdown(data.users);
+        } else {
+            hideMentionDropdown();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        hideMentionDropdown();
+    }
+}
+
+function showMentionDropdown(users) {
+    mentionDropdown.innerHTML = users.map((user, index) => `
+        <div class="mention-item flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-slate-700 ${index === 0 ? 'bg-slate-700' : ''}" data-name="${user.name}" onclick="selectMention('${user.name}')">
+            ${user.avatar
+                ? `<img src="${user.avatar}" alt="" class="w-6 h-6 rounded-full" referrerpolicy="no-referrer">`
+                : `<div class="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-medium">${user.name.charAt(0).toUpperCase()}</div>`
+            }
+            <span class="text-white text-sm">${user.name}</span>
+        </div>
+    `).join('');
+    mentionDropdown.classList.remove('hidden');
+}
+
+function hideMentionDropdown() {
+    mentionDropdown.classList.add('hidden');
+    currentMentionStart = -1;
+}
+
+function selectMention(name) {
+    if (currentMentionStart >= 0) {
+        const text = commentContent.value;
+        const cursorPos = commentContent.selectionStart;
+        const before = text.substring(0, currentMentionStart);
+        const after = text.substring(cursorPos);
+        commentContent.value = before + '@' + name + ' ' + after;
+        commentContent.focus();
+        const newCursorPos = currentMentionStart + name.length + 2;
+        commentContent.setSelectionRange(newCursorPos, newCursorPos);
+        charCount.textContent = commentContent.value.length;
+    }
+    hideMentionDropdown();
 }
 
 if (commentForm) {
@@ -441,6 +623,7 @@ if (commentForm) {
                 const newComment = document.createElement('div');
                 newComment.className = 'comment-box fade-in';
                 newComment.dataset.commentId = data.comment.id;
+                const renderedContent = renderMentions(data.comment.content.replace(/\n/g, '<br>'));
                 newComment.innerHTML = `
                     <div class="flex items-start gap-3">
                         ${avatar}
@@ -449,7 +632,28 @@ if (commentForm) {
                                 <span class="font-medium text-white text-sm">${data.comment.user_name}</span>
                                 <span class="text-xs text-slate-500">${data.comment.formatted_date}</span>
                             </div>
-                            <p class="text-slate-300 text-sm">${data.comment.content.replace(/\n/g, '<br>')}</p>
+                            <p class="text-slate-300 text-sm comment-content">${renderedContent}</p>
+                            <div class="flex items-center gap-4 mt-2">
+                                <button onclick="toggleCommentLike(${data.comment.id})" class="comment-like-btn text-xs flex items-center gap-1 text-slate-500 hover:text-pink-400 transition-colors" data-liked="false">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                    </svg>
+                                    <span class="comment-like-count"></span>
+                                </button>
+                                <button onclick="showReplyForm(${data.comment.id})" class="text-xs text-slate-500 hover:text-purple-400 flex items-center gap-1 transition-colors">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                                    </svg>
+                                    Yanıtla
+                                </button>
+                            </div>
+                            <div id="reply-form-${data.comment.id}" class="hidden mt-3">
+                                <textarea class="textarea-field text-sm mb-2" rows="2" placeholder="Yanıtınızı yazın..." maxlength="1000"></textarea>
+                                <div class="flex gap-2">
+                                    <button onclick="submitReply(${data.comment.id})" class="btn-primary text-xs py-1.5 px-3">Gönder</button>
+                                    <button onclick="hideReplyForm(${data.comment.id})" class="btn-secondary text-xs py-1.5 px-3">İptal</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -550,6 +754,7 @@ async function submitReply(parentId) {
                 ? `<img src="${data.comment.user_avatar}" alt="" class="w-8 h-8 rounded-full flex-shrink-0" referrerpolicy="no-referrer">`
                 : `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-medium flex-shrink-0">${data.comment.user_name.charAt(0).toUpperCase()}</div>`;
 
+            const replyRenderedContent = renderMentions(data.comment.content.replace(/\n/g, '<br>'));
             const replyHtml = `
                 <div class="comment-box ml-8 mt-3 pl-4 border-l-2 border-slate-700 fade-in" data-comment-id="${data.comment.id}">
                     <div class="flex items-start gap-3">
@@ -559,7 +764,15 @@ async function submitReply(parentId) {
                                 <span class="font-medium text-white text-sm">${data.comment.user_name}</span>
                                 <span class="text-xs text-slate-500">${data.comment.formatted_date}</span>
                             </div>
-                            <p class="text-slate-300 text-sm">${data.comment.content.replace(/\n/g, '<br>')}</p>
+                            <p class="text-slate-300 text-sm comment-content">${replyRenderedContent}</p>
+                            <div class="flex items-center gap-4 mt-2">
+                                <button onclick="toggleCommentLike(${data.comment.id})" class="comment-like-btn text-xs flex items-center gap-1 text-slate-500 hover:text-pink-400 transition-colors" data-liked="false">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                    </svg>
+                                    <span class="comment-like-count"></span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

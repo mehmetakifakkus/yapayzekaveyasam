@@ -93,8 +93,9 @@ class Projects extends BaseController
             ? $this->likeModel->hasLiked($this->currentUser['id'], $project['id'])
             : false;
 
-        // Get comments
-        $comments = $this->commentModel->getByProjectId($project['id']);
+        // Get comments (with likes info for logged in user)
+        $currentUserId = $this->isLoggedIn() ? $this->currentUser['id'] : null;
+        $comments = $this->commentModel->getByProjectId($project['id'], 100, $currentUserId);
         $project['comments_count'] = $this->commentModel->getCountByProject($project['id']);
 
         // Get related projects (same category)
