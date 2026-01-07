@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\ProjectModel;
 use App\Models\LikeModel;
 use App\Models\CommentModel;
+use App\Models\CommentLikeModel;
 use App\Models\BookmarkModel;
 use App\Models\FollowModel;
 use App\Models\NotificationModel;
@@ -18,6 +19,7 @@ class Api extends BaseController
     protected ProjectModel $projectModel;
     protected LikeModel $likeModel;
     protected CommentModel $commentModel;
+    protected CommentLikeModel $commentLikeModel;
     protected BookmarkModel $bookmarkModel;
     protected FollowModel $followModel;
     protected NotificationModel $notificationModel;
@@ -27,6 +29,7 @@ class Api extends BaseController
         $this->projectModel = model('ProjectModel');
         $this->likeModel = model('LikeModel');
         $this->commentModel = model('CommentModel');
+        $this->commentLikeModel = model('CommentLikeModel');
         $this->bookmarkModel = model('BookmarkModel');
         $this->followModel = model('FollowModel');
         $this->notificationModel = model('NotificationModel');
@@ -75,6 +78,56 @@ class Api extends BaseController
             // Check for like badges for project owner
             $badgeChecker = new BadgeChecker();
             $badgeChecker->checkLikeBadges((int) $project['user_id']);
+        }
+
+        return $this->respond([
+            'success' => true,
+            'action'  => $result['action'],
+            'count'   => $result['count'],
+            'message' => $result['action'] === 'liked' ? 'Beğendiniz!' : 'Beğeni kaldırıldı.',
+        ]);
+    }
+
+    /**
+     * Toggle like on a comment
+     */
+    public function likeComment(int $commentId)
+    {
+        if (!$this->isLoggedIn()) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Beğenmek için giriş yapmalısınız.',
+                'requireAuth' => true,
+            ], 401);
+        }
+
+        if ($this->isBanned()) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Hesabınız askıya alınmıştır.',
+            ], 403);
+        }
+
+        // Check if comment exists
+        $comment = $this->commentModel->find($commentId);
+        if (!$comment) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Yorum bulunamadı.',
+            ], 404);
+        }
+
+        $result = $this->commentLikeModel->toggleLike($this->currentUser['id'], $commentId);
+
+        // Create notification if liked (not for own comment)
+        if ($result['action'] === 'liked' && $comment['user_id'] != $this->currentUser['id']) {
+            $this->notificationModel->createNotification(
+                $comment['user_id'],
+                'comment_like',
+                $this->currentUser['id'],
+                $comment['project_id'],
+                'Yorumunuzu beğendi'
+            );
         }
 
         return $this->respond([
@@ -166,6 +219,9 @@ class Api extends BaseController
                 (int) $projectId
             );
         }
+
+        // Parse @mentions and create notifications
+        $this->parseMentions($content, (int) $projectId);
 
         // Format date for display
         $comment['formatted_date'] = date('d M Y, H:i', strtotime($comment['created_at']));
@@ -343,5 +399,70 @@ class Api extends BaseController
             'following' => $result['following'],
             'message'   => $result['following'] ? 'Takip ediyorsunuz!' : 'Takibi bıraktınız.',
         ]);
+    }
+
+    /**
+     * Search users (for @mention autocomplete)
+     */
+    public function searchUsers()
+    {
+        $query = trim($this->request->getGet('q') ?? '');
+
+        if (strlen($query) < 2) {
+            return $this->respond([
+                'success' => true,
+                'users'   => [],
+            ]);
+        }
+
+        $userModel = model('UserModel');
+        $excludeId = $this->isLoggedIn() ? $this->currentUser['id'] : null;
+        $users = $userModel->search($query, 10, $excludeId);
+
+        return $this->respond([
+            'success' => true,
+            'users'   => $users,
+        ]);
+    }
+
+    /**
+     * Parse @mentions in content and create notifications
+     */
+    private function parseMentions(string $content, int $projectId): void
+    {
+        // Find all @mentions
+        preg_match_all('/@([^\s@]+)/', $content, $matches);
+
+        if (empty($matches[1])) {
+            return;
+        }
+
+        $userModel = model('UserModel');
+        $mentionedUserIds = [];
+
+        foreach ($matches[1] as $username) {
+            // Clean up the username (remove trailing punctuation)
+            $username = rtrim($username, '.,!?;:');
+
+            if (empty($username)) {
+                continue;
+            }
+
+            // Find user by name
+            $user = $userModel->findByName($username);
+
+            if ($user && $user['id'] != $this->currentUser['id'] && !in_array($user['id'], $mentionedUserIds)) {
+                // Create mention notification
+                $this->notificationModel->createNotification(
+                    $user['id'],
+                    'mention',
+                    $this->currentUser['id'],
+                    $projectId,
+                    'Bir yorumda sizi etiketledi'
+                );
+
+                $mentionedUserIds[] = $user['id'];
+            }
+        }
     }
 }

@@ -77,4 +77,28 @@ class UserModel extends Model
             ->where('projects.user_id', $userId)
             ->countAllResults();
     }
+
+    /**
+     * Find user by name (for @mentions)
+     */
+    public function findByName(string $name): ?array
+    {
+        return $this->where('name', $name)->first();
+    }
+
+    /**
+     * Search users by name (for @mention autocomplete)
+     */
+    public function search(string $query, int $limit = 10, ?int $excludeUserId = null): array
+    {
+        $builder = $this->select('id, name, avatar')
+            ->like('name', $query)
+            ->limit($limit);
+
+        if ($excludeUserId) {
+            $builder->where('id !=', $excludeUserId);
+        }
+
+        return $builder->findAll();
+    }
 }
