@@ -222,11 +222,12 @@ class ProjectModel extends Model
     }
 
     /**
-     * Generate unique slug
+     * Generate unique slug with Turkish character support
      */
     public function generateSlug(string $title): string
     {
-        $slug = url_title($title, '-', true);
+        helper('text');
+        $slug = turkish_slug($title);
         $originalSlug = $slug;
         $counter = 1;
 

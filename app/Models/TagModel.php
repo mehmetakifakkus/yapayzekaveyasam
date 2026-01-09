@@ -39,7 +39,8 @@ class TagModel extends Model
      */
     public function findOrCreate(string $name): ?array
     {
-        $slug = url_title($name, '-', true);
+        helper('text');
+        $slug = turkish_slug($name);
 
         if (empty($slug)) {
             return null;
