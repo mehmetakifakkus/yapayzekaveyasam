@@ -13,6 +13,10 @@ if (!empty($currentUser['theme'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($title ?? 'AI Showcase') ?></title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="<?= base_url('favicon.svg') ?>?v=3">
+    <link rel="apple-touch-icon" href="<?= base_url('favicon.svg') ?>?v=3">
     <?php
     $metaDescription = $ogDescription ?? 'Yapay zeka araçlarıyla oluşturulmuş web projelerini keşfedin ve paylaşın.';
     $metaTitle = $ogTitle ?? $title ?? 'AI Showcase';
