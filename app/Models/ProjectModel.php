@@ -47,7 +47,7 @@ class ProjectModel extends Model
     protected $skipValidation     = false;
 
     /**
-     * Find project by slug
+     * Find project by slug (approved only)
      */
     public function findBySlug(string $slug): ?array
     {
@@ -56,6 +56,18 @@ class ProjectModel extends Model
             ->join('categories', 'categories.id = projects.category_id')
             ->where('projects.slug', $slug)
             ->where('projects.status', 'approved')
+            ->first();
+    }
+
+    /**
+     * Find project by slug (any status)
+     */
+    public function findBySlugAnyStatus(string $slug): ?array
+    {
+        return $this->select('projects.*, users.name as user_name, users.avatar as user_avatar, categories.name as category_name, categories.slug as category_slug')
+            ->join('users', 'users.id = projects.user_id')
+            ->join('categories', 'categories.id = projects.category_id')
+            ->where('projects.slug', $slug)
             ->first();
     }
 
