@@ -7,11 +7,9 @@
     <div class="flex items-center justify-between mb-8">
         <h1 class="text-2xl font-bold text-white">Bildirimler</h1>
         <?php if (!empty($notifications)): ?>
-        <form action="<?= base_url('notifications/mark-all-read') ?>" method="post">
-            <button type="submit" class="text-sm text-purple-400 hover:text-purple-300 transition-colors">
-                Tümünü Okundu İşaretle
-            </button>
-        </form>
+        <button type="button" id="mark-all-read-btn" class="text-sm text-purple-400 hover:text-purple-300 transition-colors">
+            Tümünü Okundu İşaretle
+        </button>
         <?php endif; ?>
     </div>
 
@@ -58,7 +56,7 @@
                         ? base_url('projects/' . $notification['project_slug'])
                         : base_url('user/' . $notification['actor_id']);
                 ?>
-                <a href="<?= $url ?>" class="flex items-start gap-4 p-4 hover:bg-slate-700/30 transition-colors <?= !$notification['is_read'] ? 'bg-purple-500/5' : '' ?>">
+                <a href="<?= $url ?>" onclick="markAsRead(<?= $notification['id'] ?>, event)" class="notification-item flex items-start gap-4 p-4 hover:bg-slate-700/30 transition-colors <?= !$notification['is_read'] ? 'bg-purple-500/5' : '' ?>" data-id="<?= $notification['id'] ?>">
                     <!-- Actor Avatar -->
                     <?php if (!empty($notification['actor_avatar'])): ?>
                         <img src="<?= esc($notification['actor_avatar']) ?>" alt="" class="w-10 h-10 rounded-full flex-shrink-0" referrerpolicy="no-referrer">
@@ -98,4 +96,68 @@
     <?php endif; ?>
 </div>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+async function markAsRead(notificationId, event) {
+    event.preventDefault();
+    const link = event.currentTarget;
+
+    try {
+        await fetch('<?= base_url('api/notifications/') ?>' + notificationId + '/read', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        // Update navbar badge
+        if (typeof updateNotificationBadge === 'function') {
+            updateNotificationBadge();
+        }
+
+        // Remove unread styling
+        link.classList.remove('bg-purple-500/5');
+        const dot = link.querySelector('.bg-purple-500');
+        if (dot) dot.remove();
+    } catch (err) {
+        console.error('Mark read failed:', err);
+    }
+
+    // Navigate to the link
+    window.location.href = link.href;
+}
+
+document.getElementById('mark-all-read-btn')?.addEventListener('click', async function() {
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = 'İşleniyor...';
+
+    try {
+        await fetch('<?= base_url('notifications/mark-all-read') ?>', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        // Update navbar badge
+        if (typeof updateNotificationBadge === 'function') {
+            updateNotificationBadge();
+        }
+
+        // Remove all unread styling
+        document.querySelectorAll('.notification-item').forEach(item => {
+            item.classList.remove('bg-purple-500/5');
+            const dot = item.querySelector('.bg-purple-500');
+            if (dot) dot.remove();
+        });
+
+        btn.textContent = 'Tümü Okundu';
+        btn.classList.remove('text-purple-400', 'hover:text-purple-300');
+        btn.classList.add('text-green-400');
+    } catch (err) {
+        console.error('Mark all read failed:', err);
+        btn.textContent = 'Hata oluştu';
+        btn.disabled = false;
+    }
+});
+</script>
 <?= $this->endSection() ?>

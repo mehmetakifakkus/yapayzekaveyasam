@@ -74,7 +74,18 @@ class Projects extends BaseController
     {
         $project = $this->projectModel->findBySlug($slug);
 
+        // If not found as approved, check if it exists with pending/rejected status
         if (!$project) {
+            $projectAnyStatus = $this->projectModel->findBySlugAnyStatus($slug);
+
+            if ($projectAnyStatus) {
+                // Show pending/rejected page
+                return view('pages/project_status', $this->getViewData([
+                    'title'   => 'Proje Durumu - AI Showcase',
+                    'project' => $projectAnyStatus,
+                ]));
+            }
+
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('Proje bulunamadı.');
         }
 

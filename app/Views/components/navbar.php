@@ -257,10 +257,31 @@ function loadNotifications() {
             }
 
             list.innerHTML = data.notifications.map(n => renderNotification(n)).join('');
+            updateNotificationBadge();
         })
         .catch(err => {
             document.getElementById('notification-list').innerHTML = '<div class="px-4 py-8 text-center text-red-400 text-sm">Yüklenemedi</div>';
         });
+}
+
+async function markNotificationAsRead(notificationId, event) {
+    event.preventDefault();
+    const link = event.currentTarget;
+
+    try {
+        await fetch('<?= base_url('api/notifications/') ?>' + notificationId + '/read', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        updateNotificationBadge();
+        // Remove unread styling
+        link.classList.remove('bg-purple-500/10');
+    } catch (err) {
+        console.error('Mark read failed:', err);
+    }
+
+    // Navigate to the link
+    window.location.href = link.href;
 }
 
 function renderNotification(n) {
@@ -270,7 +291,7 @@ function renderNotification(n) {
     const url = n.project_id ? '<?= base_url('projects') ?>/' + n.project_slug : '<?= base_url('user') ?>/' + n.actor_id;
 
     return `
-        <a href="${url}" class="flex items-start gap-3 px-4 py-3 hover:bg-slate-700/50 transition-colors ${isUnread}">
+        <a href="${url}" onclick="markNotificationAsRead(${n.id}, event)" class="flex items-start gap-3 px-4 py-3 hover:bg-slate-700/50 transition-colors ${isUnread}">
             <img src="${n.actor_avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(n.actor_name)}" class="w-8 h-8 rounded-full flex-shrink-0" alt="">
             <div class="flex-1 min-w-0">
                 <p class="text-sm text-slate-300"><span class="font-medium text-white">${escapeHtml(n.actor_name)}</span> ${message}</p>
