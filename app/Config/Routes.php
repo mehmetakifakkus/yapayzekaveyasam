@@ -51,6 +51,11 @@ $routes->post('notifications/mark-all-read', 'Notifications::markAllRead');
 // Feed
 $routes->get('feed', 'Users::feed');
 
+// Messages
+$routes->get('messages', 'Messages::index');
+$routes->get('messages/new/(:num)', 'Messages::newConversation/$1');
+$routes->get('messages/(:num)', 'Messages::conversation/$1');
+
 // API endpoints
 $routes->group('api', function($routes) {
     $routes->post('like/(:num)', 'Api::like/$1');
@@ -72,6 +77,14 @@ $routes->group('api', function($routes) {
     $routes->get('notifications', 'Notifications::getRecent');
     $routes->post('notifications/(:num)/read', 'Notifications::markRead/$1');
     $routes->get('notifications/unread-count', 'Notifications::unreadCount');
+
+    // Messages
+    $routes->post('messages/send', 'Api::sendMessage');
+    $routes->get('messages/(:num)', 'Api::getMessages/$1');
+    $routes->get('messages/(:num)/poll', 'Api::pollMessages/$1');
+    $routes->post('messages/(:num)/read', 'Api::markMessagesRead/$1');
+    $routes->get('messages/unread-count', 'Api::getUnreadMessageCount');
+    $routes->get('conversations', 'Api::getConversations');
 });
 
 // Admin

@@ -9,6 +9,8 @@ use App\Models\CommentLikeModel;
 use App\Models\BookmarkModel;
 use App\Models\FollowModel;
 use App\Models\NotificationModel;
+use App\Models\ConversationModel;
+use App\Models\MessageModel;
 use App\Libraries\BadgeChecker;
 use CodeIgniter\API\ResponseTrait;
 
@@ -23,6 +25,8 @@ class Api extends BaseController
     protected BookmarkModel $bookmarkModel;
     protected FollowModel $followModel;
     protected NotificationModel $notificationModel;
+    protected ConversationModel $conversationModel;
+    protected MessageModel $messageModel;
 
     public function __construct()
     {
@@ -33,6 +37,8 @@ class Api extends BaseController
         $this->bookmarkModel = model('BookmarkModel');
         $this->followModel = model('FollowModel');
         $this->notificationModel = model('NotificationModel');
+        $this->conversationModel = model('ConversationModel');
+        $this->messageModel = model('MessageModel');
     }
 
     /**
@@ -464,5 +470,266 @@ class Api extends BaseController
                 $mentionedUserIds[] = $user['id'];
             }
         }
+    }
+
+    // ================================
+    // MESSAGING API ENDPOINTS
+    // ================================
+
+    /**
+     * Send a message
+     */
+    public function sendMessage()
+    {
+        if (!$this->isLoggedIn()) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Mesaj göndermek için giriş yapmalısınız.',
+                'requireAuth' => true,
+            ], 401);
+        }
+
+        if ($this->isBanned()) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Hesabınız askıya alınmıştır.',
+            ], 403);
+        }
+
+        $recipientId = (int) $this->request->getPost('recipient_id');
+        $conversationId = (int) $this->request->getPost('conversation_id');
+        $content = trim($this->request->getPost('content') ?? '');
+
+        // Validate content
+        if (strlen($content) < 1) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Mesaj boş olamaz.',
+            ], 400);
+        }
+
+        if (strlen($content) > 2000) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Mesaj en fazla 2000 karakter olabilir.',
+            ], 400);
+        }
+
+        // Get or create conversation
+        if ($conversationId > 0) {
+            // Verify user is participant
+            if (!$this->conversationModel->isParticipant($conversationId, $this->currentUser['id'])) {
+                return $this->respond([
+                    'success' => false,
+                    'message' => 'Bu konuşmaya erişim izniniz yok.',
+                ], 403);
+            }
+            $recipientId = $this->conversationModel->getOtherParticipant($conversationId, $this->currentUser['id']);
+        } elseif ($recipientId > 0) {
+            // Can't message yourself
+            if ($recipientId === $this->currentUser['id']) {
+                return $this->respond([
+                    'success' => false,
+                    'message' => 'Kendinize mesaj gönderemezsiniz.',
+                ], 400);
+            }
+
+            // Check if recipient exists
+            $userModel = model('UserModel');
+            $recipient = $userModel->find($recipientId);
+            if (!$recipient) {
+                return $this->respond([
+                    'success' => false,
+                    'message' => 'Kullanıcı bulunamadı.',
+                ], 404);
+            }
+
+            // Check if recipient follows sender (spam prevention)
+            if (!$this->followModel->isFollowing($recipientId, $this->currentUser['id'])) {
+                return $this->respond([
+                    'success' => false,
+                    'message' => 'Bu kullanıcıya mesaj göndermek için takip edilmeniz gerekiyor.',
+                    'needsFollow' => true,
+                ], 403);
+            }
+
+            $conversation = $this->conversationModel->getOrCreateConversation($this->currentUser['id'], $recipientId);
+            $conversationId = $conversation['id'];
+        } else {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Alıcı veya konuşma ID gerekli.',
+            ], 400);
+        }
+
+        // Sanitize content
+        $content = htmlspecialchars($content, ENT_QUOTES, 'UTF-8');
+
+        // Send message
+        $message = $this->messageModel->sendMessage($conversationId, $this->currentUser['id'], $content);
+
+        if (!$message) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Mesaj gönderilemedi.',
+            ], 500);
+        }
+
+        // Create notification for recipient
+        $this->notificationModel->createNotification(
+            $recipientId,
+            'message',
+            $this->currentUser['id'],
+            null,
+            mb_substr(strip_tags($content), 0, 50) . (mb_strlen($content) > 50 ? '...' : '')
+        );
+
+        return $this->respond([
+            'success' => true,
+            'message' => 'Mesaj gönderildi!',
+            'data'    => $message,
+            'conversation_id' => $conversationId,
+        ]);
+    }
+
+    /**
+     * Get messages for a conversation
+     */
+    public function getMessages(int $conversationId)
+    {
+        if (!$this->isLoggedIn()) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Giriş yapmalısınız.',
+                'requireAuth' => true,
+            ], 401);
+        }
+
+        // Verify user is participant
+        if (!$this->conversationModel->isParticipant($conversationId, $this->currentUser['id'])) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Bu konuşmaya erişim izniniz yok.',
+            ], 403);
+        }
+
+        $limit = (int) ($this->request->getGet('limit') ?? 50);
+        $offset = (int) ($this->request->getGet('offset') ?? 0);
+
+        $messages = $this->messageModel->getByConversation($conversationId, $limit, $offset);
+
+        // Mark messages as read
+        $this->messageModel->markAsRead($conversationId, $this->currentUser['id']);
+
+        return $this->respond([
+            'success'  => true,
+            'messages' => $messages,
+        ]);
+    }
+
+    /**
+     * Poll for new messages in a conversation
+     */
+    public function pollMessages(int $conversationId)
+    {
+        if (!$this->isLoggedIn()) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Giriş yapmalısınız.',
+                'requireAuth' => true,
+            ], 401);
+        }
+
+        // Verify user is participant
+        if (!$this->conversationModel->isParticipant($conversationId, $this->currentUser['id'])) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Bu konuşmaya erişim izniniz yok.',
+            ], 403);
+        }
+
+        $lastId = (int) ($this->request->getGet('last_id') ?? 0);
+
+        $messages = $this->messageModel->getMessagesAfter($conversationId, $lastId);
+
+        // Mark messages as read
+        if (!empty($messages)) {
+            $this->messageModel->markAsRead($conversationId, $this->currentUser['id']);
+        }
+
+        return $this->respond([
+            'success'  => true,
+            'messages' => $messages,
+        ]);
+    }
+
+    /**
+     * Mark messages in a conversation as read
+     */
+    public function markMessagesRead(int $conversationId)
+    {
+        if (!$this->isLoggedIn()) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Giriş yapmalısınız.',
+                'requireAuth' => true,
+            ], 401);
+        }
+
+        // Verify user is participant
+        if (!$this->conversationModel->isParticipant($conversationId, $this->currentUser['id'])) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Bu konuşmaya erişim izniniz yok.',
+            ], 403);
+        }
+
+        $this->messageModel->markAsRead($conversationId, $this->currentUser['id']);
+
+        return $this->respond([
+            'success' => true,
+            'message' => 'Mesajlar okundu olarak işaretlendi.',
+        ]);
+    }
+
+    /**
+     * Get unread message count
+     */
+    public function getUnreadMessageCount()
+    {
+        if (!$this->isLoggedIn()) {
+            return $this->respond([
+                'success' => false,
+                'count'   => 0,
+            ]);
+        }
+
+        $count = $this->messageModel->getUnreadCount($this->currentUser['id']);
+
+        return $this->respond([
+            'success' => true,
+            'count'   => $count,
+        ]);
+    }
+
+    /**
+     * Get conversation list for current user
+     */
+    public function getConversations()
+    {
+        if (!$this->isLoggedIn()) {
+            return $this->respond([
+                'success' => false,
+                'message' => 'Giriş yapmalısınız.',
+                'requireAuth' => true,
+            ], 401);
+        }
+
+        $conversations = $this->conversationModel->getConversationsForUser($this->currentUser['id']);
+
+        return $this->respond([
+            'success'       => true,
+            'conversations' => $conversations,
+        ]);
     }
 }

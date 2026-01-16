@@ -59,6 +59,14 @@
                         </svg>
                     </a>
 
+                    <!-- Messages -->
+                    <a href="<?= base_url('messages') ?>" class="relative p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors" title="Mesajlar">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                        <span id="message-badge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-purple-500 text-white text-xs font-medium rounded-full flex items-center justify-center px-1">0</span>
+                    </a>
+
                     <!-- Notifications -->
                     <div class="relative" id="notification-dropdown">
                         <button
@@ -134,6 +142,13 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                                 </svg>
                                 Bildirimler
+                            </a>
+
+                            <a href="<?= base_url('messages') ?>" class="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors sm:hidden">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                </svg>
+                                Mesajlar
                             </a>
 
                             <a href="<?= base_url('projects/create') ?>" class="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors sm:hidden">
@@ -288,11 +303,18 @@ function renderNotification(n) {
     const icon = getNotificationIcon(n.type);
     const message = getNotificationMessage(n);
     const isUnread = !n.is_read ? 'bg-purple-500/10' : '';
-    const url = n.project_id ? '<?= base_url('projects') ?>/' + n.project_slug : '<?= base_url('user') ?>/' + n.actor_id;
+    let url;
+    if (n.type === 'message') {
+        url = '<?= base_url('messages') ?>';
+    } else if (n.project_id) {
+        url = '<?= base_url('projects') ?>/' + n.project_slug;
+    } else {
+        url = '<?= base_url('user') ?>/' + n.actor_id;
+    }
 
     return `
         <a href="${url}" onclick="markNotificationAsRead(${n.id}, event)" class="flex items-start gap-3 px-4 py-3 hover:bg-slate-700/50 transition-colors ${isUnread}">
-            <img src="${n.actor_avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(n.actor_name)}" class="w-8 h-8 rounded-full flex-shrink-0" alt="">
+            <img src="${n.actor_avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(n.actor_name)}" class="w-8 h-8 rounded-full flex-shrink-0" alt="" referrerpolicy="no-referrer">
             <div class="flex-1 min-w-0">
                 <p class="text-sm text-slate-300"><span class="font-medium text-white">${escapeHtml(n.actor_name)}</span> ${message}</p>
                 <p class="text-xs text-slate-500 mt-1">${timeAgo(n.created_at)}</p>
@@ -307,7 +329,8 @@ function getNotificationIcon(type) {
         'like': '<svg class="w-4 h-4 text-pink-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>',
         'comment': '<svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>',
         'follow': '<svg class="w-4 h-4 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>',
-        'approve': '<svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+        'approve': '<svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        'message': '<svg class="w-4 h-4 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>'
     };
     return icons[type] || '';
 }
@@ -317,10 +340,13 @@ function getNotificationMessage(n) {
         'like': 'projenizi beğendi',
         'comment': 'projenize yorum yaptı',
         'follow': 'sizi takip etmeye başladı',
-        'approve': 'projeniz onaylandı'
+        'approve': 'projeniz onaylandı',
+        'message': 'size mesaj gönderdi'
     };
     let msg = messages[n.type] || '';
-    if (n.project_title && n.type !== 'follow') {
+    if (n.type === 'message' && n.content) {
+        msg = `size mesaj gönderdi: "${escapeHtml(n.content)}"`;
+    } else if (n.project_title && n.type !== 'follow' && n.type !== 'message') {
         msg = `"${escapeHtml(n.project_title)}" ${n.type === 'approve' ? '' : 'adlı '}${msg}`;
     }
     return msg;
@@ -372,6 +398,31 @@ document.addEventListener('click', function(e) {
 
 // Update badge on page load
 document.addEventListener('DOMContentLoaded', updateNotificationBadge);
+
+// Message badge update function
+function updateMessageBadge() {
+    fetch('<?= base_url('api/messages/unread-count') ?>')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.getElementById('message-badge');
+            if (badge) {
+                if (data.count > 0) {
+                    badge.textContent = data.count > 99 ? '99+' : data.count;
+                    badge.classList.remove('hidden');
+                    badge.classList.add('flex');
+                } else {
+                    badge.classList.add('hidden');
+                    badge.classList.remove('flex');
+                }
+            }
+        });
+}
+
+// Update message badge on page load
+document.addEventListener('DOMContentLoaded', updateMessageBadge);
+
+// Periodically update message badge
+setInterval(updateMessageBadge, 30000);
 
 // Theme change function
 function changeTheme(theme) {

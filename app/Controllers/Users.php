@@ -67,8 +67,11 @@ class Users extends BaseController
 
         // Check if current user is following this user
         $isFollowing = false;
+        $canMessage = false;
         if ($this->isLoggedIn() && $this->currentUser['id'] !== $id) {
             $isFollowing = $this->followModel->isFollowing($this->currentUser['id'], $id);
+            // User can message if the profile owner follows them
+            $canMessage = $this->followModel->isFollowing($id, $this->currentUser['id']);
         }
 
         // Check if this is the current user's profile
@@ -88,6 +91,7 @@ class Users extends BaseController
             'isFollowing'    => $isFollowing,
             'isOwnProfile'   => $isOwnProfile,
             'badges'         => $badges,
+            'canMessage'     => $canMessage,
         ]));
     }
 
