@@ -9,7 +9,7 @@
             <div id="conversations-sidebar" class="w-full md:w-1/4 border-r border-slate-700 flex flex-col flex-shrink-0 <?= isset($activeConversation) || isset($isNewConversation) ? 'hidden md:flex' : '' ?>">
                 <!-- Header -->
                 <div class="p-4 border-b border-slate-700">
-                    <h1 class="text-xl font-bold text-white">Mesajlar</h1>
+                    <h1 class="text-xl font-bold text-white" style="min-height:40px">Mesajlar</h1>
                 </div>
 
                 <!-- Conversations List -->
